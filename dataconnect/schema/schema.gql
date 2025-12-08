@@ -1,0 +1,54 @@
+type User @table {
+  displayName: String!
+  email: String
+  photoUrl: String
+  createdAt: Timestamp!
+}
+
+type Vehicle @table {
+  user: User!
+  make: String!
+  model: String!
+  year: Int!
+  vin: String!
+  nickname: String
+  licensePlate: String
+  createdAt: Timestamp!
+}
+
+type OBDAdapter @table {
+  user: User!
+  name: String!
+  type: String!
+  connectionString: String!
+  description: String
+  createdAt: Timestamp!
+}
+
+type DiagnosticSession @table {
+  user: User!
+  vehicle: Vehicle!
+  obdAdapter: OBDAdapter!
+  startTime: Timestamp!
+  endTime: Timestamp
+  notes: String
+  createdAt: Timestamp!
+}
+
+type SensorData @table {
+  diagnosticSession: DiagnosticSession!
+  timestamp: Timestamp!
+  sensorName: String!
+  value: Float!
+  unit: String!
+  rawValue: String
+}
+
+type DTC @table {
+  diagnosticSession: DiagnosticSession!
+  code: String!
+  status: String!
+  timestamp: Timestamp!
+  description: String
+  details: String
+}

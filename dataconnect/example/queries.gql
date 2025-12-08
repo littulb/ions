@@ -1,0 +1,53 @@
+mutation CreateDiagnosticSession(
+  $obdAdapterId: UUID!
+  $userId: UUID!
+  $vehicleId: UUID!
+  $startTime: Timestamp!
+) @auth(level: USER) {
+  diagnosticSession_insert(
+    data: {
+      obdAdapterId: $obdAdapterId
+      userId: $userId
+      vehicleId: $vehicleId
+      startTime: $startTime
+    }
+  )
+}
+
+query GetDiagnosticSession($id: UUID!) @auth(level: USER) {
+  diagnosticSession(id: $id) {
+    id
+    obdAdapterId
+    userId
+    vehicleId
+    startTime
+    endTime
+    notes
+  }
+}
+
+mutation AddDTC(
+  $diagnosticSessionId: UUID!
+  $code: String!
+  $status: String!
+  $timestamp: Timestamp!
+) @auth(level: USER) {
+  dTC_insert(
+    data: {
+      diagnosticSessionId: $diagnosticSessionId
+      code: $code
+      status: $status
+      timestamp: $timestamp
+    }
+  )
+}
+
+query ListVehiclesForUser($userId: UUID!) @auth(level: USER) {
+  vehicles(where: { userId: { eq: $userId } }) {
+    id
+    make
+    model
+    year
+    licensePlate
+  }
+}
