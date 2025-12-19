@@ -1,104 +1,118 @@
-mutation CreateSeedData @transaction @auth(level: USER, insecureReason: "Seed data creation is an admin function.") {
-  user_insertMany(data: [
-    {
-      id: "550e8400-e29b-41d4-a716-446655440000",
-      displayName: "demouser1",
-      createdAt: "2024-04-26T12:00:00Z",
-      email: "demouser1@example.com",
-      photoUrl: "https://example.com/demouser1.jpg"
-    },
-    {
-      id: "550e8400-e29b-41d4-a716-446655440001",
-      displayName: "demouser2",
-      createdAt: "2024-04-26T13:00:00Z",
-      email: "demouser2@example.com",
-      photoUrl: "https://example.com/demouser2.jpg"
-    }
-  ])
-  vehicle_insertMany(data: [
-    {
-      id: "650e8400-e29b-41d4-a716-446655440000",
-      userId: "550e8400-e29b-41d4-a716-446655440000",
-      createdAt: "2024-04-26T14:00:00Z",
-      make: "Toyota",
-      model: "Camry",
-      vin: "1234567890ABCDEFG",
-      year: 2020
-    },
-    {
-      id: "650e8400-e29b-41d4-a716-446655440001",
-      userId: "550e8400-e29b-41d4-a716-446655440001",
-      createdAt: "2024-04-26T15:00:00Z",
-      make: "Honda",
-      model: "Civic",
-      vin: "0987654321ZYXWVUT",
-      year: 2022
-    }
-  ])
-  oBDAdapter_insertMany(data: [
-    {
-      id: "750e8400-e29b-41d4-a716-446655440000",
-      userId: "550e8400-e29b-41d4-a716-446655440000",
-      connectionString: "OBD123",
-      createdAt: "2024-04-26T16:00:00Z",
-      name: "Adapter1",
-      type: "TypeA"
-    },
-    {
-      id: "750e8400-e29b-41d4-a716-446655440001",
-      userId: "550e8400-e29b-41d4-a716-446655440001",
-      connectionString: "OBD456",
-      createdAt: "2024-04-26T17:00:00Z",
-      name: "Adapter2",
-      type: "TypeB"
-    }
-  ])
-  diagnosticSession_insertMany(data: [
-    {
-      id: "850e8400-e29b-41d4-a716-446655440000",
-      obdAdapterId: "750e8400-e29b-41d4-a716-446655440000",
-      userId: "550e8400-e29b-41d4-a716-446655440000",
-      vehicleId: "650e8400-e29b-41d4-a716-446655440000",
-      createdAt: "2024-04-26T18:00:00Z",
-      startTime: "2024-04-26T18:00:00Z"
-    },
-    {
-      id: "850e8400-e29b-41d4-a716-446655440001",
-      obdAdapterId: "750e8400-e29b-41d4-a716-446655440001",
-      userId: "550e8400-e29b-41d4-a716-446655440001",
-      vehicleId: "650e8400-e29b-41d4-a716-446655440001",
-      createdAt: "2024-04-26T19:00:00Z",
-      startTime: "2024-04-26T19:00:00Z"
-    }
-  ])
-  dTC_insertMany(data: [
-    {
-      diagnosticSessionId: "850e8400-e29b-41d4-a716-446655440000",
-      code: "P0001",
-      status: "Active",
-      timestamp: "2024-04-26T20:00:00Z"
-    },
-    {
-      diagnosticSessionId: "850e8400-e29b-41d4-a716-446655440001",
-      code: "P0002",
-      status: "Pending",
-      timestamp: "2024-04-26T21:00:00Z"
-    }
-  ])
-    sensorData_insertMany(data: [
-    {
-      diagnosticSessionId: "850e8400-e29b-41d4-a716-446655440000",
-      sensorName: "EngineTemperature",
-      unit: "C",
-      value: 90.5,
-      timestamp: "2024-04-26T22:00:00Z"
-    },
-    {
-      diagnosticSessionId: "850e8400-e29b-41d4-a716-446655440001",
-      sensorName: "EngineRPM",
-      unit: "RPM",
-      value: 2500.0,
-      timestamp: "2024-04-26T23:00:00Z"
-    }
-  ])
+mutation CreateSeedData
+@transaction
+@auth(level: USER, insecureReason: "Seed data creation is an admin function.") {
+  user_insertMany(
+    data: [
+      {
+        id: "550e8400-e29b-41d4-a716-446655440000"
+        displayName: "demouser1"
+        createdAt: "2024-04-26T12:00:00Z"
+        email: "demouser1@example.com"
+        photoUrl: "https://example.com/demouser1.jpg"
+      }
+      {
+        id: "550e8400-e29b-41d4-a716-446655440001"
+        displayName: "demouser2"
+        createdAt: "2024-04-26T13:00:00Z"
+        email: "demouser2@example.com"
+        photoUrl: "https://example.com/demouser2.jpg"
+      }
+    ]
+  )
+  vehicle_insertMany(
+    data: [
+      {
+        id: "650e8400-e29b-41d4-a716-446655440000"
+        userId: "550e8400-e29b-41d4-a716-446655440000"
+        createdAt: "2024-04-26T14:00:00Z"
+        make: "Toyota"
+        model: "Camry"
+        vin: "1234567890ABCDEFG"
+        year: 2020
+      }
+      {
+        id: "650e8400-e29b-41d4-a716-446655440001"
+        userId: "550e8400-e29b-41d4-a716-446655440001"
+        createdAt: "2024-04-26T15:00:00Z"
+        make: "Honda"
+        model: "Civic"
+        vin: "0987654321ZYXWVUT"
+        year: 2022
+      }
+    ]
+  )
+  oBDAdapter_insertMany(
+    data: [
+      {
+        id: "750e8400-e29b-41d4-a716-446655440000"
+        userId: "550e8400-e29b-41d4-a716-446655440000"
+        connectionString: "OBD123"
+        createdAt: "2024-04-26T16:00:00Z"
+        name: "Adapter1"
+        type: "TypeA"
+      }
+      {
+        id: "750e8400-e29b-41d4-a716-446655440001"
+        userId: "550e8400-e29b-41d4-a716-446655440001"
+        connectionString: "OBD456"
+        createdAt: "2024-04-26T17:00:00Z"
+        name: "Adapter2"
+        type: "TypeB"
+      }
+    ]
+  )
+  diagnosticSession_insertMany(
+    data: [
+      {
+        id: "850e8400-e29b-41d4-a716-446655440000"
+        obdAdapterId: "750e8400-e29b-41d4-a716-446655440000"
+        userId: "550e8400-e29b-41d4-a716-446655440000"
+        vehicleId: "650e8400-e29b-41d4-a716-446655440000"
+        createdAt: "2024-04-26T18:00:00Z"
+        startTime: "2024-04-26T18:00:00Z"
+      }
+      {
+        id: "850e8400-e29b-41d4-a716-446655440001"
+        obdAdapterId: "750e8400-e29b-41d4-a716-446655440001"
+        userId: "550e8400-e29b-41d4-a716-446655440001"
+        vehicleId: "650e8400-e29b-41d4-a716-446655440001"
+        createdAt: "2024-04-26T19:00:00Z"
+        startTime: "2024-04-26T19:00:00Z"
+      }
+    ]
+  )
+  dTC_insertMany(
+    data: [
+      {
+        diagnosticSessionId: "850e8400-e29b-41d4-a716-446655440000"
+        code: "P0001"
+        status: "Active"
+        timestamp: "2024-04-26T20:00:00Z"
+      }
+      {
+        diagnosticSessionId: "850e8400-e29b-41d4-a716-446655440001"
+        code: "P0002"
+        status: "Pending"
+        timestamp: "2024-04-26T21:00:00Z"
+      }
+    ]
+  )
+  sensorData_insertMany(
+    data: [
+      {
+        diagnosticSessionId: "850e8400-e29b-41d4-a716-446655440000"
+        sensorName: "EngineTemperature"
+        unit: "C"
+        value: 90.5
+        timestamp: "2024-04-26T22:00:00Z"
+      }
+      {
+        diagnosticSessionId: "850e8400-e29b-41d4-a716-446655440001"
+        sensorName: "EngineRPM"
+        unit: "RPM"
+        value: 2500.0
+        timestamp: "2024-04-26T23:00:00Z"
+      }
+    ]
+  )
 }

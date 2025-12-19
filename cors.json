@@ -1,0 +1,11 @@
+[
+  {
+    "origin": [
+      "https://ignitionswitch-3d71b.web.app",
+      "https://5173-firebase-ignition-switch-1764951989240.cluster-r7kbxfo3fnev2vskbkhhphetq6.cloudworkstations.dev"
+    ],
+    "method": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+    "responseHeader": ["Content-Type", "Authorization"],
+    "maxAgeSeconds": 3600
+  }
+]

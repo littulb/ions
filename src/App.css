@@ -1,5 +1,5 @@
 body {
   @apply bg-slate-900 text-slate-200;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-image: radial-gradient(rgb(197, 72, 72) 1px, transparent 1px);
   background-size: 4px 4px;
 }

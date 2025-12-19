@@ -1,49 +1,63 @@
-# Ignition Switch App Blueprint
+# Ignition Switch Asset Management Dashboard Blueprint
 
 ## Overview
 
-This application is a web-based remote control for a Particle IoT device (likely a Boron board) named "Ignition". It allows a user to turn the device on and off and view its current status. The interface communicates with the Particle Cloud API to call a function (`ignitionSwitch`) and read a variable (`ignitionStatus`).
+This document outlines the design, features, and implementation of the Ignition Switch Asset Management Dashboard. The application provides a user-friendly interface for managing and monitoring a fleet of assets, with a focus on remote control capabilities via Particle.io integration.
 
-## Project Outline
+## Implemented Features & Design
 
-### Initial Version (as provided)
+### Core Functionality
 
-*   **Framework:** React with Vite.
-*   **Styling:** Tailwind CSS.
-*   **Core Logic:**
-    *   A single `App` component containing all UI and business logic.
-    *   A custom hook, `useParticleSwitch`, manages state and API interactions.
-    *   API calls are made to the Particle Cloud using `fetch`.
-    *   Hardcoded `DEVICE_ID` and `ACCESS_TOKEN` for API authentication.
-*   **UI:**
-    *   A single-page interface.
-    *   Displays the device name and ID.
-    *   Shows the current status ("on" or "off") with a visual indicator.
-    *   A large toggle button to send the "on" or "off" command.
-    *   A log area to display status messages, API responses, and errors.
-    *   Modern, dark-themed design with gradient buttons and blur effects.
+*   **Asset Listing:** Displays a grid of assets from a Firestore database.
+    *   Each asset is represented by a card with its name, license, and an image.
+    *   Thumbnails are uniformly sized for a clean and consistent look.
+*   **Asset Details:** Clicking an asset reveals a detailed view with the following information:
+    *   Asset Name
+    *   Asset ID
+    *   Asset License
+    *   Asset VIN
+    *   Asset Description
+    *   Creation Date
+*   **Add Asset:** A form allows users to add new assets to the Firestore database.
+    *   The form includes fields for all the asset details listed above.
+*   **Remote Ignition Switch:** The asset details card includes a button to remotely toggle the ignition of the asset.
+    *   This feature is powered by a Particle.io device and a Firebase Function.
+    *   The UI provides real-time feedback on the ignition status and the success or failure of the command.
 
-## Current Task: Initial Setup and Refactoring
+### Design & Styling
 
-### Plan
+*   **Dark Mode Theme:** The application uses a dark mode theme for a modern and visually appealing look.
+*   **Material-UI (MUI):** The UI is built using the MUI component library, providing a consistent and professional feel.
+*   **Responsive Design:** The layout is designed to be responsive and work well on different screen sizes.
+*   **Visual Feedback:** The UI provides clear visual feedback for user actions, such as loading indicators and status messages.
 
-1.  **Fix Tailwind CSS Configuration:**
-    *   **Problem:** The application was crashing due to a PostCSS error related to Tailwind utility classes.
-    *   **Action:**
-        1.  Relocated custom `body` styles from `src/index.css` to `src/App.css`.
-        2.  Cleaned `src/index.css` to only include the core `@tailwind` directives.
-        3.  Imported `src/App.css` into `src/main.jsx` to ensure styles are applied correctly.
-        *   **Status:** Done.
+### Technical Implementation
 
-2.  **Improve Security and Configuration:**
-    *   **Problem:** Sensitive credentials (`ACCESS_TOKEN` and `DEVICE_ID`) are hardcoded in the `App.jsx` component, which is a significant security risk.
-    *   **Action:**
-        1.  Create a `.env` file to store `VITE_DEVICE_ID` and `VITE_ACCESS_TOKEN`.
-        2.  Add `.env` to the `.gitignore` file to prevent committing secrets.
-        3.  Update `App.jsx` to read these values from `import.meta.env`.
-        *   **Status:** Pending.
+*   **React:** The front-end is built using the React library.
+*   **Firebase:** The application uses the following Firebase services:
+    *   **Firestore:** To store and manage asset data.
+    *   **Firebase Functions:** To securely interact with the Particle.io API.
+*   **Particle.io:** The remote ignition switch is controlled by a Particle.io device.
+*   **`firebase.json`:**  Configured for hosting and functions deployment.
+*   **`ignitioncode/index.js`:** Contains the Firebase Function that interacts with the Particle.io API.
 
-3.  **Enhance UI/UX (Future):**
-    *   Refine the layout for better mobile responsiveness.
-    *   Improve visual feedback for loading and error states.
-    *   Consider breaking down the `App` component into smaller, more manageable components.
+## Plan for Requested Changes
+
+The following changes have been implemented to address the user's requests:
+
+1.  **Add "Asset Description" field:**
+    *   **`src/AddAsset.jsx`:** Added a "Description" text field to the "Add Asset" form.
+    *   **`src/assetCard.jsx`:** Displayed the "Asset Description" in the asset details card.
+2.  **Fix Thumbnail Sizing:**
+    *   **`src/FirestoreData.jsx`:** Adjusted the styling of the asset thumbnails to ensure they have a uniform size.
+3.  **Fix Particle IO Switch:**
+    *   **`src/assetCard.jsx`:**
+        *   Corrected the `ACCESS_TOKEN`.
+        *   Modified the code to call the `ignition` Firebase Function instead of the Particle API directly.
+        *   Ensured the correct Particle Boron device ID (`e00fce68edbf13517f31b1be`) is used.
+    *   **`ignitioncode/index.js`:**
+        *   Created the `ignition` Firebase Function to securely interact with the Particle.io API.
+        *   Ensured the correct Particle Boron device ID (`e00fce68edbf13517f31b1be`) is used.
+        *   Rewrote the `ignition` function to correctly handle the Particle API response, using the logic from `examplecode.js` as a reference.
+    *   **`firebase.json`:** Configured to deploy the `ignition` function from the `ignitioncode` directory.
+    *   **`src/firebase.js`:**  Added the Firebase Functions SDK.

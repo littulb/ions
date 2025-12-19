@@ -1,3 +1,13 @@
+type Asset @table {
+  assetId: String!
+  assetName: String!
+  assetDescription: String
+  assetLicense: String
+  assetVin: String
+  assetImage: String
+  createdAt: Timestamp!
+}
+
 type User @table {
   displayName: String!
   email: String

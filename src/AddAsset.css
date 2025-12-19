@@ -1,0 +1,79 @@
+.add-asset-container {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.add-asset-form {
+  background-color: #2d3748;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  width: 100%;
+  max-width: 500px;
+  color: white;
+}
+
+.add-asset-form h2 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border-radius: 0.25rem;
+  border: 1px solid #4a5568;
+  background-color: #1a202c;
+  color: white;
+}
+
+.add-asset-form button {
+  margin-top: 1rem;
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1.125rem;
+  border-radius: 0.25rem;
+  background-color: #48bb78;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.add-asset-form button:hover {
+  background-color: #38a169;
+}
+
+.error-message {
+  color: #f56565;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.success-message {
+  color: #48bb78;
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.toggle-form-link {
+  display: block;
+  text-align: center;
+  color: white;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
