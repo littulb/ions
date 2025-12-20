@@ -1,16 +1,25 @@
 import React, { useState } from "react";
 import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+} from "react-router-dom";
+import {
   Container,
   Typography,
-  Box,
   CssBaseline,
-  Button,
-  Collapse,
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import FirestoreData from "./FirestoreData";
 import AddAsset from "./AddAsset";
 import AssetCard from "./assetCard";
+import Dashboard from "./dashboard";
+import VehicleDetails from "./VehicleDetails";
+import AdminPage from "./AdminPage";
+import ProtectedRoute from "./ProtectedRoute";
+import Login from "./Login";
+import SignUp from "./SignUp";
+import Navbar from "./Navbar"; // Import the Navbar component
 
 // --- THEME --- //
 const theme = createTheme({
@@ -48,40 +57,49 @@ const theme = createTheme({
 
 function App() {
   const [selectedAsset, setSelectedAsset] = useState(null);
-  const [showAddAsset, setShowAddAsset] = useState(false);
 
   const handleAssetSelect = (asset) => {
     setSelectedAsset(asset);
   };
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Container sx={{ py: 4 }} maxWidth="lg">
-        <Typography variant="h3" component="h1" gutterBottom align="center">
-          Asset Management Dashboard
-        </Typography>
+    <Router>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Container sx={{ py: 4 }} maxWidth="lg">
+          <Navbar />
+          <Typography variant="h3" component="h1" gutterBottom align="center">
+            Asset Management Dashboard
+          </Typography>
 
-        <Box sx={{ my: 4, textAlign: 'center' }}>
-          <Button 
-            variant="contained" 
-            onClick={() => setShowAddAsset(!showAddAsset)}
-          >
-            {showAddAsset ? "Hide Form" : "Add New Asset"}
-          </Button>
-          <Collapse in={showAddAsset} sx={{mt: 2, display: 'flex', justifyContent: 'center'}}>
-            <AddAsset />
-          </Collapse>
-        </Box>
-        
-        <Typography variant="h5" component="h2" gutterBottom sx={{mt: 4}}>
-          Asset Fleet
-        </Typography>
-        <FirestoreData onAssetSelect={handleAssetSelect} />
-        
-        <AssetCard asset={selectedAsset} />
-      </Container>
-    </ThemeProvider>
+          <Routes>
+            <Route path="/" element={
+                <>
+                    <Typography variant="h5" component="h2" gutterBottom sx={{mt: 4}}>
+                      Asset Fleet
+                    </Typography>
+                    <FirestoreData onAssetSelect={handleAssetSelect} />
+                    <AssetCard asset={selectedAsset} />
+                </>
+            }/>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/add-asset" element={<AddAsset />} />
+            <Route path="/vehicle/:id" element={<VehicleDetails />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route 
+                path="/admin" 
+                element={
+                    <ProtectedRoute roles={['admin']}>
+                        <AdminPage />
+                    </ProtectedRoute>
+                }
+            />
+          </Routes>
+
+        </Container>
+      </ThemeProvider>
+    </Router>
   );
 }
 

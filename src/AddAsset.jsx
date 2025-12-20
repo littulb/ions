@@ -11,6 +11,8 @@ import {
   Alert,
   Box,
   Paper,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 
@@ -60,6 +62,8 @@ const AddAsset = () => {
   const [assetLicense, setAssetLicense] = useState("");
   const [assetVin, setAssetVin] = useState("");
   const [assetDescription, setAssetDescription] = useState("");
+  const [assetLocation, setAssetLocation] = useState("");
+  const [killSwitch, setKillSwitch] = useState(false);
   const [assetImage, setAssetImage] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -91,6 +95,8 @@ const AddAsset = () => {
         "asset-license": assetLicense,
         "asset-vin": assetVin,
         "asset-description": assetDescription,
+        assetLocation: assetLocation.split(',').map(s => s.trim()),
+        killSwitch: killSwitch,
         assetImage: imageUrl,
         createdAt: serverTimestamp(),
       });
@@ -100,6 +106,8 @@ const AddAsset = () => {
       setAssetLicense("");
       setAssetVin("");
       setAssetDescription("");
+      setAssetLocation("");
+      setKillSwitch(false);
       setAssetImage(null);
       setSuccess(true);
     } catch (error) {
@@ -169,6 +177,21 @@ const AddAsset = () => {
               required
             />
           </Grid>
+          <Grid item xs={12}>
+             <Typography variant="body1" sx={{ color: '#A9A9A9', mb: 1 }}>Asset Location</Typography>
+            <StyledTextField
+              placeholder="Asset Location (comma-separated)"
+              value={assetLocation}
+              onChange={(e) => setAssetLocation(e.target.value)}
+              fullWidth
+            />
+          </Grid>
+           <Grid item xs={12}>
+                <FormControlLabel
+                    control={<Checkbox checked={killSwitch} onChange={(e) => setKillSwitch(e.target.checked)} name="killSwitch" />}
+                    label="Kill Switch Activated"
+                />
+           </Grid>
           <Grid item xs={12}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <label htmlFor="contained-button-file" style={{ display: 'block', width: '100%' }}>

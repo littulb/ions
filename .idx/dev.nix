@@ -8,7 +8,10 @@
     pkgs.nodejs_20
   ];
   # Sets environment variables in the workspace
-  env = {};
+  env = {
+    FIREBASE_PROJECT_ID = "ignitionswitch-3d71b";
+    GOOGLE_CLOUD_PROJECT = "ignitionswitch-3d71b";
+  };
   idx = {
     # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
     extensions = [

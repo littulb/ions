@@ -43,21 +43,33 @@ This document outlines the design, features, and implementation of the Ignition 
 
 ## Plan for Requested Changes
 
-The following changes have been implemented to address the user's requests:
+The following is a to-do list of features to add broken down into tasks and subtasks:
 
-1.  **Add "Asset Description" field:**
-    *   **`src/AddAsset.jsx`:** Added a "Description" text field to the "Add Asset" form.
-    *   **`src/assetCard.jsx`:** Displayed the "Asset Description" in the asset details card.
-2.  **Fix Thumbnail Sizing:**
-    *   **`src/FirestoreData.jsx`:** Adjusted the styling of the asset thumbnails to ensure they have a uniform size.
-3.  **Fix Particle IO Switch:**
-    *   **`src/assetCard.jsx`:**
-        *   Corrected the `ACCESS_TOKEN`.
-        *   Modified the code to call the `ignition` Firebase Function instead of the Particle API directly.
-        *   Ensured the correct Particle Boron device ID (`e00fce68edbf13517f31b1be`) is used.
-    *   **`ignitioncode/index.js`:**
-        *   Created the `ignition` Firebase Function to securely interact with the Particle.io API.
-        *   Ensured the correct Particle Boron device ID (`e00fce68edbf13517f31b1be`) is used.
-        *   Rewrote the `ignition` function to correctly handle the Particle API response, using the logic from `examplecode.js` as a reference.
-    *   **`firebase.json`:** Configured to deploy the `ignition` function from the `ignitioncode` directory.
-    *   **`src/firebase.js`:**  Added the Firebase Functions SDK.
+### Task 1: New Features to add to the asset card
+
+*   **Subtask 1.1: Implement Live GPS Tracking**
+    *   Add a place in the details of the asset card that shows a map of where the asset is/will be.
+    *   Add a field to the assets document schema that stores the location (in an array string field called `assetLocation`). The last index in the array is the location that shows on the map.
+*   **Subtask 1.2: Develop Trip History Details**
+    *   Create a link in the asset details card that will show/hide a new trip history component that shows a list of past locations pulled from the `assetLocation` array field values.
+*   **Subtask 1.4: Design Analytics Dashboard (`dashboard.jsx`)**
+    *   Show the number of cars with kill switches activated and the number of cars without the switch activated.
+
+### Task 2: Asset Maintenance Features
+
+*   **Subtask 2.1: Implement Vehicle Details Management**
+*   **Subtask 2.2: Add Service History Tracking**
+*   **Subtask 2.3: Implement Maintenance Reminders Functionality**
+
+### Task 3: User account and Role Management
+
+*   **Subtask 3.1: Define Various Admin Roles with Different Permissions**
+    *   Should be able to create admin users.
+*   **Subtask 3.2: Implement User Onboarding and Management Functionality**
+    *   After an admin user is created they can go through onboarding to set their roles.
+
+### Task 4: Billing Functionality (Stripe API)
+
+*   **Subtask 4.1: Develop Automated Invoice Generation System**
+*   **Subtask 4.2: Integrate with Payment Gateways**
+*   **Subtask 4.3: Add Payment History and Balance Tracking Functionality**

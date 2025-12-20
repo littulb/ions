@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { Link as RouterLink } from 'react-router-dom';
 import {
   Card,
   CardContent,
@@ -10,8 +11,13 @@ import {
   Box,
   Container,
   Paper,
+  Link,
+  List,
+  ListItem,
+  ListItemText,
 } from "@mui/material";
 import { styled, useTheme } from "@mui/material/styles";
+import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 
 // --- CONFIGURATION ---
 const DEVICE_ID = "e00fce68edbf13517f31b1be";
@@ -23,6 +29,7 @@ const STATUS_API_URL = `https://api.particle.io/v1/devices/${DEVICE_ID}/${VARIAB
 const DEVICE_API_URL = `https://api.particle.io/v1/devices/${DEVICE_ID}`;
 const MAX_RETRIES = 3;
 const DELAY_MS = 1000;
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 // --- HOOK --- //
 const useParticleSwitch = () => {
@@ -156,6 +163,12 @@ const AssetCard = ({ asset }) => {
   const theme = useTheme();
   const { status, isLoading, message, isReady, handleToggle, deviceName } =
     useParticleSwitch();
+  const [showTripHistory, setShowTripHistory] = useState(false);
+
+  const { isLoaded, loadError } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY
+  })
 
   const buttonText = status === "on" ? "POWER OFF" : "POWER ON";
   const isError = message.toLowerCase().includes("error") || message.toLowerCase().includes("failed") || message.includes("FAILURE") ||  message.includes("Warning");
@@ -188,6 +201,8 @@ const AssetCard = ({ asset }) => {
     if (!timestamp || !timestamp.toDate) return "N/A";
     return timestamp.toDate().toLocaleString();
   };
+
+  const lastLocation = asset.assetLocation && asset.assetLocation.length > 0 ? asset.assetLocation[asset.assetLocation.length - 1] : null;
 
   return (
     <Grid container justifyContent="center" sx={{ mt: 4 }}>
@@ -281,6 +296,36 @@ const AssetCard = ({ asset }) => {
                     <strong>Log:</strong> {message}
                   </Typography>
                 </Box>
+
+                {isLoaded && lastLocation && (
+                  <Box sx={{ mt: 2 }}>
+                    <GoogleMap
+                      mapContainerStyle={{ height: '200px', width: '100%' }}
+                      center={{ lat: parseFloat(lastLocation.split(',')[0]), lng: parseFloat(lastLocation.split(',')[1]) }}
+                      zoom={15}
+                    >
+                      <Marker position={{ lat: parseFloat(lastLocation.split(',')[0]), lng: parseFloat(lastLocation.split(',')[1]) }} />
+                    </GoogleMap>
+                  </Box>
+                )}
+                {loadError && <Typography color="error">Error loading map.</Typography>}
+
+                <Link component="button" variant="body2" onClick={() => setShowTripHistory(!showTripHistory)} sx={{ mt: 2 }}>
+                  {showTripHistory ? 'Hide Trip History' : 'Show Trip History'}
+                </Link>
+
+                {showTripHistory && (
+                  <List>
+                    {asset.assetLocation.map((location, index) => (
+                      <ListItem key={index}>
+                        <ListItemText primary={location} />
+                      </ListItem>
+                    ))}
+                  </List>
+                )}
+                <Button component={RouterLink} to={`/vehicle/${asset.id}`} variant="outlined" sx={{ mt: 2 }}>
+                    View Details
+                </Button>
               </CardContent>
             </Grid>
           </Grid>
