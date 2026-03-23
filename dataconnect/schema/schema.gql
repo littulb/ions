@@ -5,6 +5,7 @@ type Asset @table {
   assetLicense: String
   assetVin: String
   assetImage: String
+  assetLocation: [String]
   createdAt: Timestamp!
 }
 
@@ -52,13 +53,4 @@ type SensorData @table {
   value: Float!
   unit: String!
   rawValue: String
-}
-
-type DTC @table {
-  diagnosticSession: DiagnosticSession!
-  code: String!
-  status: String!
-  timestamp: Timestamp!
-  description: String
-  details: String
 }

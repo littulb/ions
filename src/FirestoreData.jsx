@@ -14,7 +14,7 @@ import {
   Divider,
 } from "@mui/material";
 
-const ASSETS_PER_PAGE = 6; // Increased to 6 to better match the design
+const ASSETS_PER_PAGE = 6;
 
 const FirestoreData = ({ onAssetSelect }) => {
   const [assets, setAssets] = useState([]);
@@ -87,19 +87,21 @@ const FirestoreData = ({ onAssetSelect }) => {
                 "&:hover": {
                   transform: "translateY(-4px)",
                 },
-                backgroundColor: 'rgba(18, 18, 18, 0.9)', // Matching the dark theme from the image
+                backgroundColor: 'rgba(18, 18, 18, 0.9)',
                 color: 'white',
               }}
             >
-              {asset.assetImage ? (
+              {asset["asset-image"] || asset.assetImage ? (
                   <CardMedia
                       component="img"
                       sx={{
                           height: 160,
+                          width: 170,
+                          margin: "0 auto",
                           objectFit: "cover",
                       }}
-                      image={asset.assetImage}
-                      alt={asset["asset-name"] || "Unnamed Asset"}
+                      image={asset["asset-image"] || asset.assetImage}
+                      alt={asset["asset-name"] || asset.assetName || "Unnamed Asset"}
                   />
                ) : (
                   <Box sx={{
@@ -119,10 +121,10 @@ const FirestoreData = ({ onAssetSelect }) => {
                   {asset.id}
                 </Typography>
                 <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
-                  {asset["asset-license"] || "N/A"}
+                  {asset["asset-license"] || asset.assetLicense || "N/A"}
                 </Typography>
                 <Typography variant="body1" sx={{ color: 'primary.main', mb: 2 }}>
-                  {asset["asset-name"] || "Unnamed Asset"}
+                  {asset["asset-name"] || asset.assetName || "Unnamed Asset"}
                 </Typography>
                 <Divider sx={{ my: 1, backgroundColor: 'grey.700' }} />
               </CardContent>

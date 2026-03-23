@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
-import { Paper, Typography, CircularProgress, Alert, List, ListItem, ListItemText, Select, MenuItem, Button } from '@mui/material';
+import { Paper, Typography, CircularProgress, Alert, List, ListItem, ListItemText, Select, MenuItem } from '@mui/material';
 
 const AdminPage = () => {
     const [users, setUsers] = useState([]);

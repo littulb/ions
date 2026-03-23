@@ -5,6 +5,19 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   build: {
-    outDir: 'dist'
-  }
+    chunkSizeWarningLimit: 1600
+  },
+  assetsInclude: ['**/*.JPG'],
+  define: {
+    'global': 'window',
+  },
+  resolve: {
+    alias: {
+      stream: "stream-browserify",
+      events: 'events',
+    },
+  },
+  optimizeDeps: {
+    include: ['particle-api-js'],
+  },
 })

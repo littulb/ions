@@ -55,7 +55,7 @@ const Dashboard = () => {
   return (
     <Grid container spacing={3}>
         <Grid item xs={12}>
-            <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 400 }}>
+            <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 450 }}>
                 <Typography component="h2" variant="h6" color="primary" gutterBottom>
                     Kill Switch Status
                 </Typography>

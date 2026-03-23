@@ -1,60 +1,24 @@
-import React, { useState } from "react";
-import { db, storage } from "./firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  Button,
+  collection,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage } from "./firebase";
+import {
   TextField,
-  Grid,
+  Button,
+  Container,
   Typography,
-  CircularProgress,
-  Alert,
   Box,
-  Paper,
-  Checkbox,
+  CircularProgress,
+  Switch,
   FormControlLabel,
+  Alert,
 } from "@mui/material";
-import { styled } from "@mui/material/styles";
-
-const Input = styled("input")({
-  display: "none",
-});
-
-const StyledTextField = styled(TextField)(({ theme }) => ({
-  '& .MuiInputBase-root': {
-    backgroundColor: '#3a4a5b',
-    borderRadius: '4px',
-    '&:hover': {
-      backgroundColor: '#4a5a6b',
-    },
-    '&.Mui-focused': {
-      backgroundColor: '#4a5a6b',
-    },
-  },
-  '& .MuiOutlinedInput-notchedOutline': {
-    border: 'none',
-  },
-  '& .MuiInputBase-input': {
-    color: 'white',
-  },
-  '& .MuiInputBase-input::placeholder': {
-    color: '#A9A9A9',
-  },
-   '& .MuiInputLabel-root': {
-    display: 'none', // Hide the default label
-  },
-}));
-
-const buttonSx = {
-  backgroundColor: '#2563eb',
-  '&:hover': {
-    backgroundColor: '#1d4ed8',
-  },
-  borderRadius: '4px',
-  py: 1.5,
-  textTransform: 'none',
-  fontSize: '1rem'
-};
+import { v4 as uuidv4 } from "uuid";
 
 const AddAsset = () => {
   const [assetId, setAssetId] = useState("");
@@ -63,11 +27,11 @@ const AddAsset = () => {
   const [assetVin, setAssetVin] = useState("");
   const [assetDescription, setAssetDescription] = useState("");
   const [assetLocation, setAssetLocation] = useState("");
-  const [killSwitch, setKillSwitch] = useState(false);
+  const [killSwitchActivated, setKillSwitchActivated] = useState(false);
   const [assetImage, setAssetImage] = useState(null);
-  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleImageChange = (e) => {
     if (e.target.files[0]) {
@@ -78,13 +42,12 @@ const AddAsset = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-    setSuccess(false);
+    setError("");
 
     try {
       let imageUrl = "";
       if (assetImage) {
-        const imageRef = ref(storage, `assets/${Date.now()}_${assetImage.name}`);
+        const imageRef = ref(storage, `assets/${uuidv4()}`);
         await uploadBytes(imageRef, assetImage);
         imageUrl = await getDownloadURL(imageRef);
       }
@@ -95,146 +58,111 @@ const AddAsset = () => {
         "asset-license": assetLicense,
         "asset-vin": assetVin,
         "asset-description": assetDescription,
-        assetLocation: assetLocation.split(',').map(s => s.trim()),
-        killSwitch: killSwitch,
-        assetImage: imageUrl,
+        //  "asset-location": assetLocation
+        //   ? assetLocation.split(",").map((s) => s.trim())
+        //   : [],
+        // "kill-switch-activated": killSwitchActivated,
+        "asset-image": imageUrl,
         createdAt: serverTimestamp(),
       });
 
-      setAssetId("");
-      setAssetName("");
-      setAssetLicense("");
-      setAssetVin("");
-      setAssetDescription("");
-      setAssetLocation("");
-      setKillSwitch(false);
-      setAssetImage(null);
-      setSuccess(true);
+      navigate("/");
     } catch (error) {
-      setError("Error adding asset. Please try again.");
-      console.error("Error adding asset: ", error);
+      console.error("Error adding document: ", error);
+      setError("Failed to add asset. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Paper elevation={0} sx={{ p: 4, mt: 4, backgroundColor: '#2b394a', borderRadius: '8px', width: '100%', maxWidth: '800px' }}>
-      <Typography variant="h5" component="h2" gutterBottom align="center" sx={{color: 'white'}}>
-        Add New Asset
-      </Typography>
-      <form onSubmit={handleSubmit}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <Typography variant="body1" sx={{ color: '#A9A9A9', mb: 1 }}>Asset ID</Typography>
-            <StyledTextField
-              placeholder="Asset ID"
+    <Container maxWidth="sm">
+      <Box sx={{ my: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Add New Asset
+        </Typography>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+        <form onSubmit={handleSubmit}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <TextField
+              label="Asset ID"
+              variant="outlined"
               value={assetId}
               onChange={(e) => setAssetId(e.target.value)}
-              fullWidth
               required
             />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-          <Typography variant="body1" sx={{ color: '#A9A9A9', mb: 1 }}>Asset Name</Typography>
-            <StyledTextField
-              placeholder="Asset Name"
+            <TextField
+              label="Asset Name"
+              variant="outlined"
               value={assetName}
               onChange={(e) => setAssetName(e.target.value)}
-              fullWidth
               required
             />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-           <Typography variant="body1" sx={{ color: '#A9A9A9', mb: 1 }}>Asset License</Typography>
-            <StyledTextField
-              placeholder="Asset License"
+            <TextField
+              label="Asset License"
+              variant="outlined"
               value={assetLicense}
               onChange={(e) => setAssetLicense(e.target.value)}
-              fullWidth
-              required
             />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-             <Typography variant="body1" sx={{ color: '#A9A9A9', mb: 1 }}>Asset VIN</Typography>
-            <StyledTextField
-              placeholder="Asset VIN"
+            <TextField
+              label="Asset VIN"
+              variant="outlined"
               value={assetVin}
               onChange={(e) => setAssetVin(e.target.value)}
-              fullWidth
-              required
             />
-          </Grid>
-          <Grid item xs={12}>
-             <Typography variant="body1" sx={{ color: '#A9A9A9', mb: 1 }}>Asset Description</Typography>
-            <StyledTextField
-              placeholder="Asset Description"
-              value={assetDescription}
-              onChange={(e) => setAssetDescription(e.target.value)}
-              fullWidth
+            <TextField
+              label="Asset Description"
+              variant="outlined"
               multiline
               rows={4}
-              required
+              value={assetDescription}
+              onChange={(e) => setAssetDescription(e.target.value)}
             />
-          </Grid>
-          <Grid item xs={12}>
-             <Typography variant="body1" sx={{ color: '#A9A9A9', mb: 1 }}>Asset Location</Typography>
-            <StyledTextField
-              placeholder="Asset Location (comma-separated)"
+            {/* <TextField
+              label="Asset Location (comma-separated)"
+              variant="outlined"
               value={assetLocation}
               onChange={(e) => setAssetLocation(e.target.value)}
-              fullWidth
-            />
-          </Grid>
-           <Grid item xs={12}>
-                <FormControlLabel
-                    control={<Checkbox checked={killSwitch} onChange={(e) => setKillSwitch(e.target.checked)} name="killSwitch" />}
-                    label="Kill Switch Activated"
+            /> */}
+            {/* <FormControlLabel
+              control={
+                <Switch
+                  checked={killSwitchActivated}
+                  onChange={(e) => setKillSwitchActivated(e.target.checked)}
+                  name="kill-switch-activated"
+                  color="primary"
                 />
-           </Grid>
-          <Grid item xs={12}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <label htmlFor="contained-button-file" style={{ display: 'block', width: '100%' }}>
-                  <Input
-                    accept="image/*"
-                    id="contained-button-file"
-                    type="file"
-                    onChange={handleImageChange}
-                  />
-                  <Button fullWidth variant="contained" component="span" sx={buttonSx}>
-                    Upload Image
-                  </Button>
-                </label>
-                {assetImage && (
-                    <Typography sx={{ mt: 1, color: 'white', textAlign: 'center' }}>
-                        Selected: {assetImage.name}
-                    </Typography>
-                )}
-
-              <Button
-                type="submit"
-                variant="contained"
-                disabled={loading}
-                fullWidth
-                sx={buttonSx}
-              >
-                {loading ? <CircularProgress size={24} sx={{color: 'white'}}/> : 'Add Asset'}
-              </Button>
-            </Box>
-          </Grid>
-          {error && (
-            <Grid item xs={12}>
-              <Alert severity="error">{error}</Alert>
-            </Grid>
-          )}
-          {success && (
-            <Grid item xs={12}>
-              <Alert severity="success">Asset added successfully!</Alert>
-            </Grid>
-          )}
-        </Grid>
-      </form>
-    </Paper>
+              }
+              label="Kill Switch Activated"
+            /> */}
+            <Button variant="contained" component="label">
+              Upload Asset Image
+              <input type="file" hidden onChange={handleImageChange} />
+            </Button>
+            {assetImage && (
+              <Typography variant="body2">{assetImage.name}</Typography>
+            )}
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={loading}
+              sx={{ mt: 2 }}
+            >
+              {loading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                "Add Asset"
+              )}
+            </Button>
+          </Box>
+        </form>
+      </Box>
+    </Container>
   );
 };
 

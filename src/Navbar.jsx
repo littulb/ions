@@ -20,7 +20,7 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <Link to="/" className="navbar-logo">
-        Creatix
+        404*IONIS
       </Link>
       <div className="navbar-links">
         {user ? (
