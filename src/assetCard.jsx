@@ -217,7 +217,8 @@ const useParticleSwitch = (deviceId) => {
 // --- COMPONENT --- //
 const AssetCard = ({ asset }) => {
   const theme = useTheme();
-  const deviceId = asset["asset-id"] || asset.assetId;
+  // Ensure we have an ID for the hook
+  const deviceId = asset["asset-id"] || asset.assetId || asset.id;
   const {
     status,
     isLoading,
@@ -236,30 +237,14 @@ const AssetCard = ({ asset }) => {
     googleMapsApiKey: GOOGLE_MAPS_API_KEY
   });
 
-  const buttonText = status === "on" ? "POWER OFF" : "POWER ON";
   const isError = message.toLowerCase().includes("error") || message.toLowerCase().includes("failed") || message.includes("FAILURE") || loadError;
-
-  const StatusIndicator = styled("div")({
-    width: 16,
-    height: 16,
-    borderRadius: "50%",
-    backgroundColor: status === "on" ? theme.palette.success.main : theme.palette.error.main,
-    display: "inline-block",
-    verticalAlign: "middle",
-  });
-
-  const formatDate = (timestamp) => {
-    if (!timestamp || !timestamp.toDate) return "N/A";
-    return timestamp.toDate().toLocaleString();
-  };
+  const isOn = status === "on";
 
   const mapCenter = useMemo(() => {
-    if (gpsLocation && gpsLocation.lat) {
-        return { lat: gpsLocation.lat, lng: gpsLocation.lng };
-    }
-    const lastLocation = asset.assetLocation && asset.assetLocation.length > 0 ? asset.assetLocation[asset.assetLocation.length - 1] : null;
-    if (lastLocation && typeof lastLocation === 'string') {
-        const parts = lastLocation.split(',');
+    if (gpsLocation && gpsLocation.lat) return { lat: gpsLocation.lat, lng: gpsLocation.lng };
+    const lastLoc = asset.assetLocation && asset.assetLocation.length > 0 ? asset.assetLocation[asset.assetLocation.length - 1] : null;
+    if (lastLoc && typeof lastLoc === 'string') {
+        const parts = lastLoc.split(',');
         if (parts.length === 2) {
           const lat = parseFloat(parts[0]);
           const lng = parseFloat(parts[1]);
@@ -269,146 +254,332 @@ const AssetCard = ({ asset }) => {
     return { lat: 32.61, lng: -97.14 }; 
   }, [gpsLocation, asset.assetLocation]);
 
+  const formatDate = (timestamp) => {
+    if (!timestamp || !timestamp.toDate) return "N/A";
+    return timestamp.toDate().toLocaleString();
+  };
+
+  // Shared Styles from "Obsidian Cockpit" Token Spec
+  const fontHeadline = "'Space Grotesk', sans-serif";
+  const fontBody = "'Inter', sans-serif";
+  const colors = {
+    primary: "#90d792",
+    primaryFixed: "#abf4ac",
+    onPrimary: "#004b18",
+    background: "#0c0e10",
+    surfaceContainerLow: "#111416",
+    surfaceContainer: "#161a1e",
+    surfaceContainerHigh: "#1b2025",
+    surfaceContainerHighest: "#20262c",
+    surfaceBright: "#252d33",
+    onSurface: "#e0e6ed",
+    onSurfaceVariant: "#a6acb2",
+    outlineVariant: "rgba(66, 73, 78, 0.3)", 
+    outlineFaint: "rgba(66, 73, 78, 0.1)",
+    error: "#ee7d77",
+  };
+
   return (
-    <Card elevation={4}>
-      <Grid container>
-        <Grid xs={12} md={6}>
-          <Box sx={{ position: "relative", height: "100%", minHeight: "400px" }}>
-            {asset['asset-image'] || asset.assetImage ? (
-              <CardMedia
-                component="img"
-                sx={{ height: "100%", objectFit: "cover" }}
-                image={asset['asset-image'] || asset.assetImage}
-                alt={asset["asset-name"] || asset.assetName}
-              />
-            ) : (
-              <Box sx={{ height: "100%", backgroundColor: "grey.900", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Typography variant="h5" color="text.secondary">No Image</Typography>
-              </Box>
-            )}
+    <Box sx={{ color: colors.onSurface, fontFamily: fontBody, width: '100%', mb: 4 }}>
+      {/* Main Grid */}
+      <Grid container spacing={3}>
+        {/* Left Column */}
+        <Grid item xs={12} lg={8}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, height: '100%' }}>
             
-            {isLoaded && mapCenter && (
+            {/* Image Header */}
+            <Box sx={{
+              position: 'relative',
+              borderRadius: '12px',
+              overflow: 'hidden',
+              aspectRatio: { xs: '4/3', md: '16/9' },
+              border: `1px solid ${colors.outlineVariant}`,
+              bgcolor: colors.surfaceContainer
+            }}>
+              {asset['asset-image'] || asset.assetImage ? (
+                <Box component="img" 
+                  src={asset['asset-image'] || asset.assetImage} 
+                  alt={asset["asset-name"] || asset.assetName || "Vehicle"}
+                  sx={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                />
+              ) : (
+                <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Typography sx={{ fontFamily: fontHeadline, color: colors.onSurfaceVariant }}>No Cover Image</Typography>
+                </Box>
+              )}
+              {/* Telemetry Badge */}
               <Box sx={{
-                  position: "absolute",
-                  bottom: 0,
-                  right: 0,
-                  height: "50%",
-                  width: "100%",
-                  border: `2px solid ${theme.palette.common.white}`,
-                  borderRadius: 1,
-                  boxShadow: 3,
-                  overflow: "hidden",
-                  zIndex: 2
-                }}>
-                <GoogleMap
-                  mapContainerStyle={{ height: "100%", width: "100%" }}
-                  center={mapCenter}
-                  zoom={gpsLocation ? 17 : 14}
-                >
-                  <Marker position={mapCenter} label={gpsLocation ? "LIVE" : "DB"} />
-                </GoogleMap>
+                position: 'absolute', top: 16, right: 16,
+                bgcolor: 'rgba(12, 14, 16, 0.8)',
+                backdropFilter: 'blur(12px)',
+                px: 1.5, py: 0.75,
+                borderRadius: '8px',
+                border: `1px solid ${colors.outlineVariant}`,
+                display: 'flex', alignItems: 'center', gap: 1
+              }}>
+                <Box sx={{ position: 'relative', display: 'flex', height: 8, width: 8 }}>
+                  <Box sx={{
+                    position: 'absolute', width: '100%', height: '100%', borderRadius: '50%',
+                    bgcolor: isOn ? colors.primary : colors.error, opacity: 0.75,
+                    animation: isGettingLocation || isLoading ? 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite' : 'none'
+                  }} />
+                  <Box sx={{ position: 'relative', width: 8, height: 8, borderRadius: '50%', bgcolor: isOn ? colors.primary : colors.error }} />
+                </Box>
+                <Typography sx={{ fontFamily: fontHeadline, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                  Telemetry Live
+                </Typography>
               </Box>
-            )}
+            </Box>
+
+            {/* Asset Identity Section */}
+            <Box sx={{
+              bgcolor: colors.surfaceContainerLow,
+              borderRadius: '12px', p: { xs: 2.5, md: 4 },
+              border: `1px solid ${colors.outlineFaint}`,
+              flexGrow: 1
+            }}>
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, alignItems: { lg: 'flex-end' }, justifyContent: 'space-between', gap: 2, mb: 4 }}>
+                <Box>
+                  <Typography sx={{ fontFamily: fontHeadline, fontSize: 12, color: 'rgba(144, 215, 146, 0.7)', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+                    Vehicle Profile
+                  </Typography>
+                  <Typography sx={{ fontFamily: fontHeadline, fontSize: { xs: 24, md: 32 }, fontWeight: 700, mt: 0.5, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+                    {asset["asset-name"] || asset.assetName || "Unidentified Asset"}
+                  </Typography>
+                </Box>
+                <Box sx={{ textAlign: { lg: 'right' }, mt: { xs: 1, lg: 0 } }}>
+                  <Typography sx={{ fontFamily: fontHeadline, fontSize: 10, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.1em', mb: 0.5 }}>
+                    Electronic ID
+                  </Typography>
+                  <Box component="code" sx={{ bgcolor: colors.surfaceContainerHighest, px: 1.5, py: 0.5, borderRadius: '4px', color: colors.primary, fontSize: 12, fontFamily: 'monospace' }}>
+                    {deviceId || "MISSING"}
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* Technical Specs Bento */}
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={5} md={4}>
+                  <Box sx={{ bgcolor: colors.surfaceContainer, p: 2.5, borderRadius: '8px', border: `1px solid ${colors.outlineFaint}`, height: '100%' }}>
+                    <Typography sx={{ fontFamily: fontHeadline, fontSize: 10, color: colors.onSurfaceVariant, textTransform: 'uppercase', mb: 1, letterSpacing: '0.05em' }}>License Plate</Typography>
+                    <Typography sx={{ fontFamily: fontHeadline, fontSize: 18, fontWeight: 700, letterSpacing: '0.1em' }}>{asset["asset-license"] || asset.assetLicense || "N/A"}</Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} sm={7} md={8}>
+                  <Box sx={{ bgcolor: colors.surfaceContainer, p: 2.5, borderRadius: '8px', border: `1px solid ${colors.outlineFaint}`, height: '100%' }}>
+                    <Typography sx={{ fontFamily: fontHeadline, fontSize: 10, color: colors.onSurfaceVariant, textTransform: 'uppercase', mb: 1, letterSpacing: '0.05em' }}>Vehicle Identification Number (VIN)</Typography>
+                    <Typography sx={{ fontFamily: fontHeadline, fontSize: 18, fontWeight: 700, letterSpacing: '0.1em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{asset["asset-vin"] || asset.assetVin || "N/A"}</Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12}>
+                  <Box sx={{ bgcolor: colors.surfaceContainer, p: 2.5, borderRadius: '8px', border: `1px solid ${colors.outlineFaint}` }}>
+                    <Typography sx={{ fontFamily: fontHeadline, fontSize: 10, color: colors.onSurfaceVariant, textTransform: 'uppercase', mb: 1, letterSpacing: '0.05em' }}>Description</Typography>
+                    <Typography sx={{ fontSize: 14, color: '#c9d1d9', lineHeight: 1.6 }}>{asset["asset-description"] || asset.assetDescription || "No description provided. Please update the master asset database."}</Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+
           </Box>
         </Grid>
-        
-        <Grid xs={12} md={6}>
-          <CardContent sx={{ p: 3 }}>
-            <Typography gutterBottom variant="h4">{asset["asset-name"] || asset.assetName}</Typography>
+
+        {/* Right Column */}
+        <Grid item xs={12} lg={4}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, height: '100%' }}>
             
-            {/* 1, 2, 3: RESTORED METADATA FIELDS */}
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="body1" color="text.secondary">
-                <strong>ID:</strong> {asset["asset-id"] || asset.assetId}
+            {/* Status & Telemetry HUD */}
+            <Box sx={{ bgcolor: colors.surfaceContainer, p: 3, borderRadius: '12px', border: `1px solid ${colors.outlineVariant}`, position: 'relative', overflow: 'hidden' }}>
+              <Typography sx={{ fontFamily: fontHeadline, fontSize: 10, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.1em', mb: 3 }}>
+                Remote System State
               </Typography>
-              <Typography variant="body1" color="text.secondary">
-                <strong>License:</strong> {asset["asset-license"] || asset.assetLicense}
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                <strong>VIN:</strong> {asset["asset-vin"] || asset.assetVin}
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                <strong>Description:</strong> {asset["asset-description"] || asset.assetDescription}
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                <strong>Created At:</strong> {formatDate(asset.createdAt)}
-              </Typography>
-              {/* <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
-                <Typography variant="body1" color="text.secondary" sx={{ mr: 1 }}>
-                  <strong>Kill Switch:</strong>
-                </Typography>
-                <Chip
-                  label={asset["kill-switch-activated"] ? "Activated" : "Deactivated"}
-                  color={asset["kill-switch-activated"] ? "error" : "success"}
-                  size="small"
-                />
-              </Box> */}
-            </Box>
-
-            <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                <StatusIndicator />
-                <Typography variant="h6" sx={{ ml: 1.5 }}>{deviceName}</Typography>
+              
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
+                <Box sx={{ 
+                  width: 48, height: 48, borderRadius: '8px', 
+                  bgcolor: isOn ? 'rgba(144, 215, 146, 0.1)' : 'rgba(238, 125, 119, 0.1)',
+                  border: `1px solid ${isOn ? 'rgba(144, 215, 146, 0.2)' : 'rgba(238, 125, 119, 0.2)'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                  <span className="material-symbols-outlined" style={{ color: isOn ? colors.primary : colors.error, fontSize: 24 }}>power_settings_new</span>
+                </Box>
+                <Box>
+                  <Typography sx={{ fontSize: 12, color: colors.onSurfaceVariant, fontWeight: 500, mb: 0.5 }}>Ignition Status</Typography>
+                  <Typography sx={{ fontFamily: fontHeadline, fontSize: 22, fontWeight: 700, color: isOn ? colors.primary : colors.error, display: 'flex', alignItems: 'center', gap: 1.5, lineHeight: 1 }}>
+                    {isOn ? "READY_ON" : "STANDBY_OFF"}
+                    {isOn && <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: colors.primary, boxShadow: `0 0 8px ${colors.primary}` }} />}
+                  </Typography>
+                </Box>
               </Box>
-              <Typography variant="body2" color="text.secondary">Remote Status: {status.toUpperCase()}</Typography>
-            </Paper>
 
-            <Grid container spacing={2}>
-                <Grid xs={6}>
-                    <Button
-                        onClick={handleToggle}
-                        disabled={!isReady || isLoading}
-                        variant="contained"
-                        color={status === "on" ? "error" : "success"}
-                        fullWidth
-                    >
-                        {isLoading ? <CircularProgress size={24} /> : buttonText}
-                    </Button>
-                </Grid>
-                <Grid xs={6}>
-                    <Button
-                        onClick={handleGetLocation}
-                        disabled={!isReady || isGettingLocation}
-                        variant="outlined"
-                        fullWidth
-                    >
-                        GET GPS
-                    </Button>
-                </Grid>
-            </Grid>
-
-            <Box sx={{ mt: 2, p: 1.5, bgcolor: 'background.paper', border: '1px solid', borderColor: isError ? 'error.main' : 'divider', borderRadius: 1 }}>
-              <Typography variant="body2" color={isError ? "error" : "text.secondary"}>
-                <strong>Log:</strong> {message}
-              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', pb: 1.5, borderBottom: `1px solid ${colors.outlineFaint}`, alignItems: 'center' }}>
+                  <Typography sx={{ fontSize: 12, color: colors.onSurfaceVariant }}>Device Target</Typography>
+                  <Typography sx={{ fontFamily: fontHeadline, fontSize: 14, fontWeight: 500 }}>{deviceName}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', pb: 1.5, borderBottom: `1px solid ${colors.outlineFaint}`, alignItems: 'center' }}>
+                  <Typography sx={{ fontSize: 12, color: colors.onSurfaceVariant }}>Network Logic</Typography>
+                  <Typography sx={{ fontFamily: fontHeadline, fontSize: 14, color: isReady ? colors.primary : colors.onSurfaceVariant, fontWeight: 500 }}>
+                    {isReady ? "CONNECTED" : "OFFLINE"}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 0.5 }}>
+                  <Typography sx={{ fontSize: 12, color: isError ? colors.error : colors.onSurfaceVariant }}>Platform Log</Typography>
+                  <Typography sx={{ fontFamily: fontHeadline, fontSize: 12, color: isError ? colors.error : colors.onSurface, maxWidth: '65%', textAlign: 'right', fontWeight: 500 }}>
+                    {message.toUpperCase()}
+                  </Typography>
+                </Box>
+              </Box>
             </Box>
 
-            <Link component="button" variant="body2" onClick={() => setShowTripHistory(!showTripHistory)} sx={{ mt: 2, display: 'block' }}>
-              {showTripHistory ? "Hide History" : "Show Trip History"}
-            </Link>
+            {/* GPS Integration Mini-Map */}
+            <Box sx={{ bgcolor: colors.surfaceContainerLow, borderRadius: '12px', border: `1px solid ${colors.outlineVariant}`, overflow: 'hidden', flexGrow: 1, minHeight: 220, display: 'flex', flexDirection: 'column' }}>
+              <Box sx={{ p: 2, borderBottom: `1px solid ${colors.outlineFaint}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: colors.surfaceContainer }}>
+                <Typography sx={{ fontFamily: fontHeadline, fontSize: 10, color: colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 600 }}>
+                  Active Localization
+                </Typography>
+                <span className="material-symbols-outlined" style={{ fontSize: 16, color: colors.onSurfaceVariant }}>my_location</span>
+              </Box>
+              <Box sx={{ position: 'relative', flexGrow: 1 }}>
+                {isLoaded ? (
+                  <GoogleMap
+                    mapContainerStyle={{ width: "100%", height: "100%" }}
+                    center={mapCenter}
+                    zoom={gpsLocation ? 16 : 13}
+                    options={{ 
+                        disableDefaultUI: true, 
+                        // Simplified dark mode styling for the embedded minimal map
+                        styles: [
+                            { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
+                            { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
+                            { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
+                            { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#d59563' }] },
+                            { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#17263c' }] },
+                        ] 
+                    }}
+                  >
+                    <Marker position={mapCenter} icon={{ url: "https://maps.google.com/mapfiles/ms/icons/green-dot.png" }} />
+                  </GoogleMap>
+                ) : (
+                  <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(255,255,255,0.02)' }}>
+                    <CircularProgress size={24} sx={{ color: colors.primary }} />
+                  </Box>
+                )}
+                {/* Simulated Radar Overlay Ping */}
+                <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                     {!isLoaded && <Typography sx={{ fontFamily: fontHeadline, fontSize: 12, color: colors.primary, mb: -6 }}>LOCATING...</Typography>}
+                </Box>
+                
+                {/* Coordinates Tab */}
+                <Box sx={{ position: 'absolute', bottom: 12, left: 12, bgcolor: 'rgba(12, 14, 16, 0.9)', px: 1.5, py: 0.75, borderRadius: '4px', border: `1px solid ${colors.outlineVariant}`, backdropFilter: 'blur(4px)' }}>
+                  <Typography sx={{ fontFamily: 'monospace', fontSize: 10, color: colors.primary }}>
+                    {mapCenter.lat.toFixed(4)}° N, {mapCenter.lng.toFixed(4)}° W
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
 
-            {showTripHistory && asset.assetLocation && (
-              <List dense>
-                {asset.assetLocation.map((loc, i) => (
-                  <ListItem key={i}><ListItemText secondary={loc} /></ListItem>
-                ))}
-              </List>
-            )}
+          </Box>
+        </Grid>
+      </Grid>
 
-            {/* 4: RESTORED VIEW DETAILS BUTTON */}
+      {/* Unified High-Contrast Action Bar */}
+      <Box sx={{ mt: 3, bgcolor: colors.surfaceContainerHigh, borderRadius: '12px', p: { xs: 1.5, sm: 2 }, border: `1px solid ${colors.outlineVariant}` }}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={4}>
+            <Button
+              onClick={handleToggle}
+              disabled={!isReady || isLoading}
+              fullWidth
+              sx={{
+                bgcolor: isOn ? colors.error : colors.primary,
+                color: isOn ? '#fff' : colors.onPrimary,
+                fontFamily: fontHeadline,
+                fontWeight: 700,
+                fontSize: 14,
+                py: 2, borderRadius: '8px',
+                '&:hover': { bgcolor: isOn ? '#d32f2f' : colors.primaryFixed },
+                boxShadow: isOn ? '0 0 24px rgba(238,125,119,0.15)' : '0 0 24px rgba(144,215,146,0.15)',
+                transition: 'all 0.2s ease-in-out',
+                '&:active': { transform: 'scale(0.98)' }
+              }}
+            >
+              {isLoading ? <CircularProgress size={20} color="inherit" /> : (
+                <>
+                  <span className="material-symbols-outlined" style={{ marginRight: 8, fontSize: 20 }}>bolt</span>
+                  {isOn ? "POWER OFF" : "POWER ON"}
+                </>
+              )}
+            </Button>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Button
+              onClick={handleGetLocation}
+              disabled={!isReady || isGettingLocation}
+              fullWidth
+              sx={{
+                bgcolor: colors.surfaceContainerHighest,
+                color: colors.onSurface,
+                fontFamily: fontHeadline,
+                fontWeight: 700,
+                fontSize: 14,
+                py: 2, borderRadius: '8px',
+                border: `1px solid ${colors.outlineVariant}`,
+                '&:hover': { bgcolor: colors.surfaceBright },
+                transition: 'all 0.2s ease-in-out',
+                '&:active': { transform: 'scale(0.98)' }
+              }}
+            >
+              {isGettingLocation ? <CircularProgress size={20} color="inherit" /> : (
+                <>
+                  <span className="material-symbols-outlined" style={{ marginRight: 8, fontSize: 20 }}>location_searching</span>
+                  GET GPS
+                </>
+              )}
+            </Button>
+          </Grid>
+          <Grid item xs={12} md={4}>
             <Button
               component={RouterLink}
               to={`/vehicle/${asset.id}`}
-              variant="outlined"
-              sx={{ mt: 2 }}
               fullWidth
+              sx={{
+                bgcolor: colors.surfaceContainerHighest,
+                color: colors.onSurface,
+                fontFamily: fontHeadline,
+                fontWeight: 700,
+                fontSize: 14,
+                py: 2, borderRadius: '8px',
+                border: `1px solid ${colors.outlineVariant}`,
+                '&:hover': { bgcolor: colors.surfaceBright },
+                transition: 'all 0.2s ease-in-out',
+                '&:active': { transform: 'scale(0.98)' }
+              }}
             >
-              View Details
+              <span className="material-symbols-outlined" style={{ marginRight: 8, fontSize: 20 }}>analytics</span>
+              VIEW DETAILS
             </Button>
-          </CardContent>
+          </Grid>
         </Grid>
-      </Grid>
-    </Card>
+      </Box>
+
+      {/* Trip history link - styled subtly */}
+      <Box sx={{ mt: 3, textAlign: 'center' }}>
+        <Link component="button" variant="body2" onClick={() => setShowTripHistory(!showTripHistory)} sx={{ color: colors.onSurfaceVariant, fontFamily: fontBody, fontSize: 12, transition: 'color 0.2s', '&:hover': { color: colors.primary } }}>
+          {showTripHistory ? "HIDE DIAGNOSTIC HISTORY" : "SHOW DIAGNOSTIC HISTORY"}
+        </Link>
+        {showTripHistory && asset.assetLocation && (
+          <List dense sx={{ mt: 2, bgcolor: colors.surfaceContainerLow, borderRadius: '8px', border: `1px solid ${colors.outlineFaint}`, textAlign: 'left', p: 1 }}>
+            {asset.assetLocation.map((loc, i) => (
+              <ListItem key={i} sx={{ borderBottom: `1px solid rgba(255,255,255,0.03)`}}>
+                   <span className="material-symbols-outlined" style={{ fontSize: 14, color: colors.onSurfaceVariant, marginRight: 8 }}>history</span>
+                   <ListItemText secondary={loc} secondaryTypographyProps={{ color: colors.onSurfaceVariant, fontSize: 12, fontFamily: 'monospace' }} />
+              </ListItem>
+            ))}
+          </List>
+        )}
+      </Box>
+
+    </Box>
   );
 };
 
