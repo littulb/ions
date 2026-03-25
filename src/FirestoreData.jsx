@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { db } from "./firebase";
 import { collection, onSnapshot } from "firebase/firestore";
 import {
   Grid,
   Card,
-  CardMedia,
-  CardContent,
   Typography,
   CircularProgress,
   Box,
   Pagination,
   Button,
-  Divider,
 } from "@mui/material";
 
 const ASSETS_PER_PAGE = 6;
@@ -22,6 +20,17 @@ const FirestoreData = ({ onAssetSelect }) => {
   const [loading, setLoading] = useState(true);
   const [hovered, setHovered] = useState(null);
   const [page, setPage] = useState(1);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (location.state?.reopenAsset && !loading && assets.length > 0) {
+      const targetId = location.state.reopenAsset.id || location.state.reopenAsset['asset-id'];
+      const targetAsset = assets.find(a => (a.id === targetId) || (a['asset-id'] === targetId)) || location.state.reopenAsset;
+      onAssetSelect(targetAsset, location.state.restoredGps);
+      navigate('.', { replace: true, state: {} });
+    }
+  }, [location.state, loading, assets, onAssetSelect, navigate]);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -66,89 +75,133 @@ const FirestoreData = ({ onAssetSelect }) => {
     (page - 1) * ASSETS_PER_PAGE,
     page * ASSETS_PER_PAGE
   );
+  const fontHeadline = "'Space Grotesk', sans-serif";
+  const fontBody = "'Inter', sans-serif";
+  const colors = {
+    primary: "#90d792",
+    onPrimary: "#004b18",
+    background: "#0c0e10",
+    surfaceContainerLowest: "#000000",
+    surfaceContainerLow: "#111416",
+    surfaceContainer: "#161a1e",
+    surfaceContainerHigh: "#1b2025",
+    surfaceContainerHighest: "#20262c",
+    surfaceBright: "#252d33",
+    onSurface: "#e0e6ed",
+    onSurfaceVariant: "#a6acb2",
+    outlineVariant: "rgba(66, 73, 78, 0.3)",
+    outlineFaint: "rgba(66, 73, 78, 0.1)",
+    error: "#ee7d77",
+    primaryContainer: "#07521d",
+    onPrimaryFixedVariant: "#246830",
+  };
+
+  const gradientOverlay = 'linear-gradient(to top, rgba(12, 14, 16, 0.95) 0%, rgba(12, 14, 16, 0.4) 50%, transparent 100%)';
 
   return (
-    <Box>
-      <Grid container spacing={3} sx={{ mt: 2 }}>
+    <Box sx={{ fontFamily: fontBody, color: colors.onSurface }}>
+      {/* Section Header */}
+      <Box sx={{ mb: 6, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+        <Box>
+          <Typography sx={{ fontFamily: fontHeadline, fontSize: { xs: 32, md: 40 }, fontWeight: 700, letterSpacing: '-0.02em', textTransform: 'uppercase', color: colors.onSurface, lineHeight: 1 }}>
+            Asset Fleet
+          </Typography>
+        </Box>
+      </Box>
+
+      <Grid container spacing={3}>
         {paginatedAssets.map((asset) => (
-          <Grid item key={asset.id} xs={12} sm={6} md={4} lg={4}>
+          <Grid key={asset.id} size={{ xs: 12, sm: 6, md: 6, lg: 4 }}>
             <Card
-              elevation={hovered === asset.id ? 8 : 2}
+              elevation={0}
               onMouseEnter={() => setHovered(asset.id)}
               onMouseLeave={() => setHovered(null)}
               sx={{
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                transition: (theme) =>
-                  theme.transitions.create(["box-shadow", "transform"], {
-                    duration: theme.transitions.duration.short,
-                  }),
-                "&:hover": {
-                  transform: "translateY(-4px)",
-                },
-                backgroundColor: 'rgba(18, 18, 18, 0.9)',
-                color: 'white',
+                width: '100%',
+                display: 'flex',
+                alignItems: 'stretch',
+                position: 'relative',
+                aspectRatio: '4/5',
+                overflow: 'hidden',
+                borderRadius: '12px',
+                bgcolor: colors.surfaceContainer,
+                transition: 'all 0.5s ease',
+                cursor: 'pointer',
+                border: hovered === asset.id ? `2px solid rgba(144, 215, 146, 0.3)` : `2px solid transparent`,
+                boxShadow: hovered === asset.id ? '0 32px 64px rgba(0,0,0,0.5)' : 'none',
               }}
+              onClick={() => onAssetSelect(asset)}
             >
-              {asset["asset-image"] || asset.assetImage ? (
-                  <CardMedia
-                      component="img"
-                      sx={{
-                          height: 160,
-                          width: 170,
-                          margin: "0 auto",
-                          objectFit: "cover",
-                      }}
-                      image={asset["asset-image"] || asset.assetImage}
-                      alt={asset["asset-name"] || asset.assetName || "Unnamed Asset"}
-                  />
-               ) : (
-                  <Box sx={{
-                      height: 160,
-                      backgroundColor: 'grey.900',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                  }}>
-                      <Typography variant="h6" color="text.secondary">
-                          Image
-                      </Typography>
-                  </Box>
-               )}
-              <CardContent sx={{ flexGrow: 1, paddingBottom: 1 }}>
-                <Typography variant="caption" color="text.secondary">
-                  {asset.id}
-                </Typography>
-                <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
-                  {asset["asset-license"] || asset.assetLicense || "N/A"}
-                </Typography>
-                <Typography variant="body1" sx={{ color: 'primary.main', mb: 2 }}>
-                  {asset["asset-name"] || asset.assetName || "Unnamed Asset"}
-                </Typography>
-                <Divider sx={{ my: 1, backgroundColor: 'grey.700' }} />
-              </CardContent>
-              <Box sx={{ p: 2, pt: 0 }}>
-                <Button 
-                  variant="contained"
-                  fullWidth
-                  onClick={() => onAssetSelect(asset)}
+              {/* Background Image */}
+              {asset['asset-image'] || asset.assetImage ? (
+                <Box
+                  component="img"
+                  src={asset['asset-image'] || asset.assetImage}
+                  alt={asset['asset-name'] || asset.assetName || "Vehicle"}
                   sx={{
-                    backgroundColor: 'white',
-                    color: 'black',
+                    position: 'absolute',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    transition: 'transform 0.7s ease',
+                    transform: hovered === asset.id ? 'scale(1.1)' : 'scale(1)',
+                  }}
+                />
+              ) : (
+                <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: colors.surfaceContainerLowest }}>
+                  <Typography sx={{ fontFamily: fontHeadline, color: colors.onSurfaceVariant }}>No Image Available</Typography>
+                </Box>
+              )}
+
+              {/* Gradient Overlay */}
+              <Box sx={{ position: 'absolute', inset: 0, background: gradientOverlay, pointerEvents: 'none' }} />
+
+              {/* Content Panel (Bottom absolute) */}
+              <Box sx={{ position: 'absolute', bottom: 0, left: 0, width: '100%', p: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <Box>
+                    <Typography sx={{ fontFamily: fontHeadline, fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em', color: colors.onSurface, textTransform: 'uppercase', lineHeight: 1.2, mb: 0.5 }}>
+                      {asset['asset-name'] || asset.assetName || "UNIDENTIFIED ASSET"}
+                    </Typography>
+                    <Typography sx={{ fontFamily: fontHeadline, fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', color: colors.primary, textTransform: 'uppercase' }}>
+                      {asset["asset-license"] || asset.assetLicense || "NO PLATES"}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Button
+                  onClick={(e) => { e.stopPropagation(); onAssetSelect(asset); }}
+                  fullWidth
+                  sx={{
+                    bgcolor: colors.surfaceContainerHighest,
+                    border: `1px solid ${colors.outlineFaint}`,
+                    color: colors.onSurface,
+                    fontFamily: fontHeadline,
+                    fontWeight: 700,
+                    fontSize: 12,
+                    py: 2,
+                    mt: 1,
+                    borderRadius: '6px',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    transition: 'all 0.2s',
                     '&:hover': {
-                      backgroundColor: 'grey.300',
-                    }
+                      bgcolor: colors.primary,
+                      color: colors.onPrimary,
+                      borderColor: 'transparent',
+                    },
+                    '&:active': { transform: 'scale(0.95)' }
                   }}
                 >
-                  View Details
+                  VIEW DETAILS
                 </Button>
               </Box>
             </Card>
           </Grid>
         ))}
       </Grid>
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}>
         <Pagination
           count={Math.ceil(assets.length / ASSETS_PER_PAGE)}
           page={page}
@@ -156,7 +209,13 @@ const FirestoreData = ({ onAssetSelect }) => {
           color="primary"
           sx={{
             '& .MuiPaginationItem-root': {
-              color: 'white',
+              color: colors.onSurface,
+              fontFamily: fontHeadline,
+              fontWeight: 700,
+              '&.Mui-selected': {
+                bgcolor: colors.primary,
+                color: colors.onPrimary,
+              }
             },
           }}
         />

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Box, Backdrop, Fade } from '@mui/material';
+import { Modal, Box, Backdrop, Fade, IconButton } from '@mui/material';
 import AssetCard from './assetCard'; // Assuming AssetCard is the detailed view
 
 const modalStyle = {
@@ -17,7 +17,7 @@ const modalStyle = {
   borderRadius: 2, // Rounded corners
 };
 
-const AssetCardModal = ({ asset, open, handleClose }) => {
+const AssetCardModal = ({ asset, open, handleClose, restoredGps }) => {
   return (
     <Modal
       aria-labelledby="asset-details-modal-title"
@@ -32,9 +32,26 @@ const AssetCardModal = ({ asset, open, handleClose }) => {
     >
       <Fade in={open}>
         <Box sx={modalStyle}>
+          <IconButton
+            onClick={handleClose}
+            sx={{
+              position: 'absolute',
+              top: 16,
+              right: 16,
+              color: '#e0e6ed',
+              zIndex: 100,
+              bgcolor: 'rgba(0, 0, 0, 0.5)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.8)' },
+              boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+            }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 24 }}>close</span>
+          </IconButton>
           {/* We only render the AssetCard if an asset is selected.
               The modal's open state is controlled by this. */}
-          {asset && <AssetCard asset={asset} />}
+          {asset && <AssetCard asset={asset} handleClose={handleClose} restoredGps={restoredGps} />}
         </Box>
       </Fade>
     </Modal>

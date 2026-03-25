@@ -14,6 +14,7 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import FirestoreData from "./FirestoreData";
 import AddAsset from "./AddAsset";
 import AssetCardModal from "./AssetCardModal";
+import AssetMapView from "./AssetMapView";
 import Dashboard from "./dashboard";
 import VehicleDetails from "./VehicleDetails";
 import AdminPage from "./AdminPage";
@@ -37,10 +38,10 @@ const theme = createTheme({
       paper: "#1e1e1e",
     },
     success: {
-        main: '#81c784',
+      main: '#81c784',
     },
     error: {
-        main: '#e57373',
+      main: '#e57373',
     }
   },
   typography: {
@@ -59,9 +60,11 @@ const theme = createTheme({
 function App() {
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [restoredGps, setRestoredGps] = useState(null);
 
-  const handleAssetSelect = (asset) => {
+  const handleAssetSelect = (asset, gps = null) => {
     setSelectedAsset(asset);
+    setRestoredGps(gps);
     setIsModalOpen(true);
   };
 
@@ -97,25 +100,23 @@ function App() {
 
             <Routes>
               <Route path="/" element={
-                  <>
-                      <Typography variant="h5" component="h2" gutterBottom sx={{mt: 4}}>
-                        Asset Fleet
-                      </Typography>
-                      <FirestoreData onAssetSelect={handleAssetSelect} />
-                  </>
-              }/>
+                <>
+                  <FirestoreData onAssetSelect={handleAssetSelect} />
+                </>
+              } />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/add-asset" element={<AddAsset />} />
               <Route path="/vehicle/:id" element={<VehicleDetails />} />
+              <Route path="/map/:id" element={<AssetMapView />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<SignUp />} />
-              <Route 
-                  path="/admin" 
-                  element={
-                      <ProtectedRoute roles={['admin']}>
-                          <AdminPage />
-                      </ProtectedRoute>
-                  }
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute roles={['admin']}>
+                    <AdminPage />
+                  </ProtectedRoute>
+                }
               />
             </Routes>
 
@@ -123,6 +124,7 @@ function App() {
               asset={selectedAsset}
               open={isModalOpen}
               handleClose={handleCloseModal}
+              restoredGps={restoredGps}
             />
 
           </Container>
