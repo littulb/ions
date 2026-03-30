@@ -22,6 +22,8 @@ import ProtectedRoute from "./ProtectedRoute";
 import Login from "./Login";
 import SignUp from "./SignUp";
 import Navbar from "./Navbar"; // Import the Navbar component
+import SplashScreen from "./SplashScreen";
+import useAuth from "./useAuth";
 
 // --- THEME --- //
 const theme = createTheme({
@@ -61,6 +63,7 @@ function App() {
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [restoredGps, setRestoredGps] = useState(null);
+  const { user, loading } = useAuth();
 
   const handleAssetSelect = (asset, gps = null) => {
     setSelectedAsset(asset);
@@ -100,9 +103,11 @@ function App() {
 
             <Routes>
               <Route path="/" element={
-                <>
+                loading ? null : user ? (
                   <FirestoreData onAssetSelect={handleAssetSelect} />
-                </>
+                ) : (
+                  <SplashScreen />
+                )
               } />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/add-asset" element={<AddAsset />} />

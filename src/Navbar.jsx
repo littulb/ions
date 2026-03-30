@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./Navbar.css";
 import useAuth from "./useAuth";
 import { auth } from "./firebase";
@@ -8,10 +8,12 @@ import { signOut } from "firebase/auth";
 
 const Navbar = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      navigate('/');
     } catch (error) {
       console.error("Error during sign-out:", error);
     }
@@ -20,7 +22,7 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <Link to="/" className="navbar-logo">
-        404*IONIS
+        IONIS
       </Link>
       <div className="navbar-links">
         {user ? (

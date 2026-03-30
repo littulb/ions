@@ -48,7 +48,8 @@ export default function useParticleSwitch(deviceId, initialGps = null) {
       const statusData = await statusResponse.json().catch(() => ({}));
 
       if (statusResponse.ok && statusData.result !== undefined) {
-        const currentStatus = [1, "on", "ON", true].includes(statusData.result) ? "on" : "off";
+        // Enforce Strict Logic: 1 = Activated, 0 = Deactivated
+        const currentStatus = [1, "1", "on", "ON", true].includes(statusData.result) ? "on" : "off";
         setStatus(currentStatus);
         setMessage(`Ready.`);
       } else {
@@ -105,11 +106,12 @@ export default function useParticleSwitch(deviceId, initialGps = null) {
           const eventData = JSON.parse(messageEvent.data);
           const vitals = JSON.parse(eventData.data);
 
+          // clearTimeout(timeoutId);
           const battery = vitals?.device?.power?.battery || vitals?.power?.battery;
           const source = vitals?.device?.power?.source || vitals?.power?.source;
           const network = vitals?.device?.network || vitals?.network;
 
-          if (battery && battery.charge && battery.charge.err === -210 && source === "USB host") {
+          if (battery && battery.charge && battery.charge.err === -210) {
             setBattery("Plugged In");
             setMessage("Power System: Stationary (USB Power)");
           } else if (battery && battery.charge && battery.charge.val !== undefined) {

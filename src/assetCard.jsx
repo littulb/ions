@@ -268,21 +268,26 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
             disabled={!isReady || isLoading}
             fullWidth
             sx={{
-              bgcolor: isOn ? colors.error : colors.primary,
-              color: isOn ? '#fff' : colors.onPrimary,
+              bgcolor: !isReady ? colors.surfaceContainerHighest : (isOn ? colors.error : colors.primary),
+              color: !isReady ? colors.onSurfaceVariant : (isOn ? '#fff' : colors.onPrimary),
               fontFamily: fontHeadline,
               fontWeight: 700,
               fontSize: 14,
               py: 3, borderRadius: '6px',
-              '&:hover': { bgcolor: isOn ? '#d32f2f' : colors.primaryFixed },
-              boxShadow: isOn ? '0 8px 32px rgba(238,125,119,0.15)' : '0 8px 32px rgba(144,215,146,0.15)',
+              '&:hover': { bgcolor: !isReady ? colors.surfaceContainerHighest : (isOn ? '#d32f2f' : colors.primaryFixed) },
+              boxShadow: !isReady ? 'none' : (isOn ? '0 8px 32px rgba(238,125,119,0.15)' : '0 8px 32px rgba(144,215,146,0.15)'),
               transition: 'all 0.2s ease-in-out',
               letterSpacing: '0.2em',
               textTransform: 'uppercase',
-              '&:active': { transform: 'scale(0.98)' }
+              '&:active': { transform: !isReady ? 'none' : 'scale(0.98)' }
             }}
           >
-            {isLoading ? <CircularProgress size={24} color="inherit" /> : (
+            {(!isReady || isLoading) ? (
+              <>
+                <CircularProgress size={20} color="inherit" sx={{ mr: 2 }} />
+                <span style={{ fontSize: 13, letterSpacing: '0.1em' }}>SYNCING HARDWARE...</span>
+              </>
+            ) : (
               <>
                 <span className="material-symbols-outlined" style={{ marginRight: 12, fontSize: 24 }}>power_settings_new</span>
                 {isOn ? "DEACTIVATE SWITCH" : "ACTIVATE SWITCH"}
@@ -304,29 +309,63 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
               <Typography sx={{ fontFamily: fontHeadline, fontSize: 20, fontWeight: 700, letterSpacing: '-0.02em', color: colors.onSurface }}>Active Localization</Typography>
               <Typography sx={{ fontSize: 12, color: colors.onSurfaceVariant, mt: 0.5 }}>Global positioning and trajectory tracking</Typography>
             </Box>
-            <Button
-              onClick={handleGetLocation}
-              disabled={!isReady || isGettingLocation}
-              sx={{
-                bgcolor: colors.surfaceContainerHighest,
-                color: colors.onSurface,
-                fontFamily: fontHeadline,
-                fontWeight: 700,
-                fontSize: 10,
-                px: 2, py: 1, borderRadius: '4px',
-                border: `1px solid ${colors.outlineVariant}`,
-                '&:hover': { bgcolor: colors.surfaceBright },
-                letterSpacing: '0.1em',
-                transition: 'all 0.2s',
-              }}
-            >
-              {isGettingLocation ? <CircularProgress size={16} color="inherit" /> : (
-                <>
-                  <span className="material-symbols-outlined" style={{ marginRight: 6, fontSize: 16 }}>my_location</span>
-                  GET GPS
-                </>
+            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+              <Button
+                onClick={handleGetLocation}
+                disabled={!isReady || isGettingLocation}
+                sx={{
+                  bgcolor: colors.surfaceContainerHighest,
+                  color: colors.onSurface,
+                  fontFamily: fontHeadline,
+                  fontWeight: 700,
+                  fontSize: 10,
+                  px: 2, py: 1, borderRadius: '4px',
+                  border: `1px solid ${colors.outlineVariant}`,
+                  '&:hover': { bgcolor: colors.surfaceBright },
+                  letterSpacing: '0.1em',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {isGettingLocation ? <CircularProgress size={16} color="inherit" /> : (
+                  <>
+                    <span className="material-symbols-outlined" style={{ marginRight: 6, fontSize: 16 }}>my_location</span>
+                    GET GPS
+                  </>
+                )}
+              </Button>
+              {gpsLocation && gpsLocation.lat && (
+                <Button
+                  onClick={() => {
+                    if (handleClose) handleClose();
+                    navigate(`/map/${asset.id || asset['asset-id']}`, {
+                      state: {
+                        asset,
+                        gpsLocation,
+                        status,
+                        battery: displayBattery,
+                        signal: displaySignal
+                      }
+                    });
+                  }}
+                  sx={{
+                    bgcolor: `${colors.primary}15`,
+                    color: colors.primary,
+                    fontFamily: fontHeadline,
+                    fontWeight: 700,
+                    fontSize: 10,
+                    px: 2, py: 1, borderRadius: '4px',
+                    border: `1px solid ${colors.primary}50`,
+                    '&:hover': { bgcolor: colors.primary, color: colors.onPrimary },
+                    letterSpacing: '0.1em',
+                    transition: 'all 0.2s',
+                    boxShadow: '0 4px 12px rgba(144,215,146,0.1)'
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ marginRight: 6, fontSize: 16 }}>open_in_new</span>
+                  FULLSCREEN MAP
+                </Button>
               )}
-            </Button>
+            </Box>
           </Box>
 
           {/* Map Container */}
@@ -527,13 +566,13 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
           disabled={!isReady || isLoading}
           fullWidth
           sx={{
-            background: isOn ? `linear-gradient(to right, ${colors.error}, #bb5551)` : `linear-gradient(to right, ${colors.primary}, ${colors.primaryContainer})`,
-            color: isOn ? '#fff' : colors.onPrimary,
+            background: !isReady ? colors.surfaceContainerHighest : (isOn ? `linear-gradient(to right, ${colors.error}, #bb5551)` : `linear-gradient(to right, ${colors.primary}, ${colors.primaryContainer})`),
+            color: !isReady ? colors.onSurfaceVariant : (isOn ? '#fff' : colors.onPrimary),
             fontFamily: fontHeadline,
             fontWeight: 700,
             fontSize: 14,
             py: 2, borderRadius: '8px',
-            boxShadow: isOn ? '0 0 12px 2px rgba(238, 125, 119, 0.2)' : '0 0 12px 2px rgba(144, 215, 146, 0.2)',
+            boxShadow: !isReady ? 'none' : (isOn ? '0 0 12px 2px rgba(238, 125, 119, 0.2)' : '0 0 12px 2px rgba(144, 215, 146, 0.2)'),
             transition: 'transform 0.1s',
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
@@ -541,10 +580,15 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
             alignItems: 'center',
             justifyContent: 'center',
             gap: 1.5,
-            '&:active': { transform: 'scale(0.95)' }
+            '&:active': { transform: !isReady ? 'none' : 'scale(0.95)' }
           }}
         >
-          {isLoading ? <CircularProgress size={20} color="inherit" /> : (
+          {(!isReady || isLoading) ? (
+             <>
+               <CircularProgress size={18} color="inherit" />
+               <span style={{ fontSize: 13, letterSpacing: '0.1em' }}>SYNCING...</span>
+             </>
+          ) : (
             <>
               <span className="material-symbols-outlined" style={{ fontSize: 18, fontVariationSettings: "'FILL' 1" }}>power_settings_new</span>
               {isOn ? "DEACTIVATE SWITCH" : "ACTIVATE SWITCH"}
