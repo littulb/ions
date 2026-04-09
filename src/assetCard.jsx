@@ -53,6 +53,14 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
     signal
   } = useParticleSwitch(deviceId, restoredGps);
   const [showTripHistory, setShowTripHistory] = useState(false);
+  const [hasRequestedGps, setHasRequestedGps] = useState(false);
+
+  useEffect(() => {
+    if (isReady && !gpsLocation && !hasRequestedGps) {
+      setHasRequestedGps(true);
+      handleGetLocation();
+    }
+  }, [isReady, gpsLocation, hasRequestedGps, handleGetLocation]);
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
