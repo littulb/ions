@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { db } from "./firebase";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import useAuth from "./useAuth";
 import {
   Grid,
   Card,
@@ -22,6 +23,7 @@ const FirestoreData = ({ onAssetSelect }) => {
   const [page, setPage] = useState(1);
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, role } = useAuth();
 
   useEffect(() => {
     if (location.state?.reopenAsset && !loading && assets.length > 0) {
@@ -33,8 +35,15 @@ const FirestoreData = ({ onAssetSelect }) => {
   }, [location.state, loading, assets, onAssetSelect, navigate]);
 
   useEffect(() => {
+    if (!user) return;
+
+    // Optional: Admins can see the whole fleet, regular users see only their assigned assets
+    const q = role === 'admin' 
+        ? collection(db, "assets") 
+        : query(collection(db, "assets"), where("userId", "==", user.uid));
+
     const unsubscribe = onSnapshot(
-      collection(db, "assets"),
+      q,
       (snapshot) => {
         const data = snapshot.docs.map((doc) => ({
           id: doc.id,
@@ -53,7 +62,7 @@ const FirestoreData = ({ onAssetSelect }) => {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [user, role]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);

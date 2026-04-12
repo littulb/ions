@@ -34,18 +34,22 @@ exports.ionisAICommand = onRequest({ secrets: ["GEMINI_API_KEY"] }, async (req, 
     if (!prompt) return res.status(400).send("Missing prompt");
 
     try {
-        // 2. Initialize Gemini with your SECURE key
+        // Change your initialization to:
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel(
+            { model: "gemini-1.5-flash-latest" },
+            { apiVersion: 'v1' } // Explicitly use v1
+        );
 
-        // 3. Inference: Let the AI decide
         const result = await model.generateContent(`${SYSTEM_PROMPT}\n\nUser Command: ${prompt}`);
-        const aiResponse = JSON.parse(result.response.text());
+
+        // CLEANING THE RESPONSE: Removes Markdown formatting like ```json or ```
+        const cleanText = result.response.text().replace(/```json|```/g, "").trim();
+        const aiResponse = JSON.parse(cleanText);
         const action = aiResponse.arg;
 
         if (action === "unknown") return res.status(200).send("AI uncertain. No action taken.");
 
-        // 4. Dispatch to Boron (LTE Cat M1)
         await axios.post(
             `https://api.particle.io/v1/devices/e00fce68edbf13517f31b1be/ignitionSwitch`,
             `arg=${action}`,
@@ -59,7 +63,8 @@ exports.ionisAICommand = onRequest({ secrets: ["GEMINI_API_KEY"] }, async (req, 
 
         res.status(200).send(`IONIS AI executed: ${action.toUpperCase()}`);
     } catch (error) {
+        // Detailed logging helps you see the AI's raw response in the Firebase console
         console.error("Critical AI Failure:", error);
-        res.status(500).send("Command processing error.");
+        res.status(500).send(`Command processing error: ${error.message}`);
     }
 });

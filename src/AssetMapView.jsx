@@ -65,7 +65,9 @@ export default function AssetMapView() {
     handleToggle,
     gpsLocation: hookGpsLocation,
     battery: hookBattery,
-    signal: hookSignal
+    signal: hookSignal,
+    handleGetLocation,
+    isGettingLocation
   } = useParticleSwitch(deviceId, initialGpsLocation);
 
   const gpsLocation = hookGpsLocation || initialGpsLocation;
@@ -182,6 +184,13 @@ export default function AssetMapView() {
                   {isOn ? "DEACTIVATE SWITCH" : "ACTIVATE SWITCH"}
                 </>
               )}
+            </Button>
+            <Button 
+              onClick={handleGetLocation} 
+              disabled={!isReady || isGettingLocation}
+              sx={{ width: 54, height: 54, minWidth: 54, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: colors.surfaceContainerHighest, borderRadius: '8px', border: `1px solid ${colors.outlineVariant}50`, color: colors.primary, '&:hover': { bgcolor: colors.surfaceBright } }}
+            >
+              {isGettingLocation ? <CircularProgress size={20} color="inherit" /> : <span className="material-symbols-outlined" style={{ fontSize: 24 }}>my_location</span>}
             </Button>
             <Button component="a" href={`https://maps.google.com/?q=${gpsLocation.lat},${gpsLocation.lng}`} target="_blank" sx={{ width: 54, height: 54, minWidth: 54, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: colors.surfaceContainerHighest, borderRadius: '8px', border: `1px solid ${colors.outlineVariant}50`, color: colors.onSurface, '&:hover': { bgcolor: colors.surfaceBright } }}>
               <span className="material-symbols-outlined" style={{ fontSize: 24 }}>navigation</span>

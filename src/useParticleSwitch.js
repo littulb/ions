@@ -35,7 +35,7 @@ export default function useParticleSwitch(deviceId, initialGps = null) {
     const authHeaders = { Authorization: `Bearer ${ACCESS_TOKEN}` };
 
     try {
-      const nameResponse = await fetch(DEVICE_API_URL, { method: 'GET', headers: authHeaders });
+      const nameResponse = await fetch(DEVICE_API_URL, { method: 'GET', headers: authHeaders, cache: 'no-store' });
       const nameData = await nameResponse.json().catch(() => ({}));
 
       if (nameResponse.ok && nameData.name) {
@@ -44,7 +44,7 @@ export default function useParticleSwitch(deviceId, initialGps = null) {
         setDeviceName("Name Unavailable");
       }
 
-      const statusResponse = await fetch(STATUS_API_URL, { method: 'GET', headers: authHeaders });
+      const statusResponse = await fetch(STATUS_API_URL, { method: 'GET', headers: authHeaders, cache: 'no-store' });
       const statusData = await statusResponse.json().catch(() => ({}));
 
       if (statusResponse.ok && statusData.result !== undefined) {
@@ -58,7 +58,7 @@ export default function useParticleSwitch(deviceId, initialGps = null) {
 
       // 1. FETCH LAST KNOWN VITALS FOR INSTANT UI RENDERING
       const lastVitalsUrl = `https://api.particle.io/v1/diagnostics/${deviceId}/last`;
-      const vitalsResponse = await fetch(lastVitalsUrl, { method: 'GET', headers: authHeaders });
+      const vitalsResponse = await fetch(lastVitalsUrl, { method: 'GET', headers: authHeaders, cache: 'no-store' });
       const vitalsData = await vitalsResponse.json().catch(() => null);
 
       if (vitalsData?.diagnostics?.payload) {

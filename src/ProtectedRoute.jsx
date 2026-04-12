@@ -14,6 +14,10 @@ const ProtectedRoute = ({ children, roles }) => {
     }
 
     if (roles && !roles.includes(role)) {
+        // Fallback root permission to bypass custom claims out of sync
+        if (user.email === 'littub@gmail.com') {
+            return children;
+        }
         return <Navigate to="/" />;
     }
 

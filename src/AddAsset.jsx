@@ -19,8 +19,10 @@ import {
   Alert,
 } from "@mui/material";
 import { v4 as uuidv4 } from "uuid";
+import useAuth from "./useAuth";
 
 const AddAsset = () => {
+  const { user } = useAuth();
   const [assetId, setAssetId] = useState("");
   const [assetName, setAssetName] = useState("");
   const [assetLicense, setAssetLicense] = useState("");
@@ -63,6 +65,7 @@ const AddAsset = () => {
         //   : [],
         // "kill-switch-activated": killSwitchActivated,
         "asset-image": imageUrl,
+        userId: user ? user.uid : null,
         createdAt: serverTimestamp(),
       });
 
