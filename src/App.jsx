@@ -115,14 +115,6 @@ function App() {
               <Route path="/map/:id" element={<AssetMapView />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<SignUp />} />
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute roles={['admin']}>
-                    <AdminPage />
-                  </ProtectedRoute>
-                }
-              />
             </Routes>
 
             <AssetCardModal
