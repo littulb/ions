@@ -19,11 +19,13 @@ import {
   IconButton
 } from "@mui/material";
 import { styled, useTheme } from "@mui/material/styles";
-import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, Polyline } from '@react-google-maps/api';
 
 import useParticleSwitch from './useParticleSwitch';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from './firebase';
+import { Slider } from '@mui/material';
+import { getAddressFromCoords } from './utils/geoUtils';
 
 // --- CONFIGURATION ---
 const ACCESS_TOKEN = "b41c40940d370527fc69d053c6138afbed9094c2";
@@ -46,12 +48,15 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
     if (!asset || !(asset.id || asset['asset-id'])) return;
     const docId = asset.id || asset['asset-id'];
     try {
-      const locString = `${newLoc.lat}, ${newLoc.lng}`;
+      const locObj = {
+        pos: `${newLoc.lat},${newLoc.lng}`,
+        timestamp: new Date().toISOString()
+      };
       const assetRef = doc(db, 'assets', docId);
       await updateDoc(assetRef, {
-        'asset-location-history': arrayUnion(locString)
+        'asset-location-history': arrayUnion(locObj)
       });
-      console.log('Location saved to Firestore:', locString);
+      console.log('Location saved to Firestore:', locObj);
     } catch (e) {
       console.error('Error saving location history:', e);
     }
@@ -73,6 +78,8 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
   const [showTripHistory, setShowTripHistory] = useState(false);
   const [hasRequestedGps, setHasRequestedGps] = useState(false);
   const [selectedLoc, setSelectedLoc] = useState(null);
+  const [activeHistoryIndex, setActiveHistoryIndex] = useState(null);
+  const [addressDisplay, setAddressDisplay] = useState('');
 
   useEffect(() => {
     if (isReady && !gpsLocation && !hasRequestedGps) {
@@ -94,13 +101,19 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
   const displayBattery = battery !== null ? battery : '--';
   const displaySignal = signal !== null ? signal : '--';
 
-  const mapCenter = useMemo(() => {
-    if (selectedLoc) return selectedLoc;
+  const normalizedHistory = useMemo(() => {
+    const raw = asset['asset-location-history'] || [];
+    return raw.map(item => {
+      if (typeof item === 'string') return { pos: item, timestamp: null };
+      return item;
+    });
+  }, [asset['asset-location-history']]);
+
+  const liveLocation = useMemo(() => {
     if (gpsLocation && gpsLocation.lat) return { lat: gpsLocation.lat, lng: gpsLocation.lng };
-    const history = asset['asset-location-history'];
-    const lastLoc = history && history.length > 0 ? history[history.length - 1] : null;
-    if (lastLoc && typeof lastLoc === 'string') {
-      const parts = lastLoc.split(',');
+    const lastItem = normalizedHistory.length > 0 ? normalizedHistory[normalizedHistory.length - 1] : null;
+    if (lastItem && lastItem.pos) {
+      const parts = lastItem.pos.split(',');
       if (parts.length === 2) {
         const lat = parseFloat(parts[0]);
         const lng = parseFloat(parts[1]);
@@ -108,7 +121,32 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
       }
     }
     return { lat: 0, lng: -0 };
-  }, [selectedLoc, gpsLocation, asset['asset-location-history']]);
+  }, [gpsLocation, normalizedHistory]);
+
+  const mapCenter = useMemo(() => {
+    if (selectedLoc) return selectedLoc;
+    return liveLocation;
+  }, [selectedLoc, liveLocation]);
+
+  const polylinePath = useMemo(() => {
+    return normalizedHistory.map(item => {
+      if (!item || !item.pos) return null;
+      const parts = item.pos.split(',');
+      return { lat: parseFloat(parts[0]), lng: parseFloat(parts[1]) };
+    }).filter(p => p && !isNaN(p.lat) && !isNaN(p.lng));
+  }, [normalizedHistory]);
+
+  const handleScrub = async (event, newValue) => {
+    setActiveHistoryIndex(newValue);
+    const item = normalizedHistory[newValue];
+    if (item && item.pos) {
+      const parts = item.pos.split(',');
+      setSelectedLoc({ lat: parseFloat(parts[0]), lng: parseFloat(parts[1]) });
+      setAddressDisplay('Fetching address...');
+      const address = await getAddressFromCoords(item.pos);
+      setAddressDisplay(address);
+    }
+  };
 
   const formatDate = (timestamp) => {
     if (!timestamp || !timestamp.toDate) return "N/A";
@@ -168,7 +206,23 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
       zoom={gpsLocation ? 16 : 13}
       options={mapOptions}
     >
-      <Marker position={mapCenter} icon={{ url: "https://maps.google.com/mapfiles/ms/icons/green-dot.png" }} />
+      <Marker position={liveLocation} icon={{ url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png" }} />
+      {polylinePath.length > 1 && (
+        <Polyline
+          path={polylinePath}
+          options={{
+            strokeColor: colors.primary,
+            strokeOpacity: 0.8,
+            strokeWeight: 4,
+          }}
+        />
+      )}
+      {activeHistoryIndex !== null && normalizedHistory[activeHistoryIndex] && (
+        (() => {
+          const parts = normalizedHistory[activeHistoryIndex].pos.split(',');
+          return <Marker position={{ lat: parseFloat(parts[0]), lng: parseFloat(parts[1]) }} icon={{ url: "https://maps.google.com/mapfiles/ms/icons/green-dot.png" }} />;
+        })()
+      )}
     </GoogleMap>
   ) : (
     <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -362,14 +416,14 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
                   </>
                 )}
               </Button>
-              {gpsLocation && gpsLocation.lat && (
+              {(mapCenter && (mapCenter.lat !== 0 || mapCenter.lng !== 0)) && (
                 <Button
                   onClick={() => {
                     if (handleClose) handleClose();
                     navigate(`/map/${asset.id || asset['asset-id']}`, {
                       state: {
                         asset,
-                        gpsLocation,
+                        gpsLocation: mapCenter,
                         status,
                         battery: displayBattery,
                         signal: displaySignal
@@ -416,30 +470,42 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
 
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Link component="button" variant="body2" onClick={() => setShowTripHistory(!showTripHistory)} sx={{ color: colors.onSurfaceVariant, fontFamily: fontBody, fontSize: 12, transition: 'color 0.2s', '&:hover': { color: colors.primary } }}>
-              {showTripHistory ? "HIDE LOCATION HISTORY" : "SHOW LOCATION HISTORY"}
+              {showTripHistory ? "HIDE HISTORY TIMELINE" : "SHOW HISTORY TIMELINE"}
             </Link>
           </Box>
-          {showTripHistory && asset['asset-location-history'] && (
-            <List dense sx={{ mt: 2, bgcolor: colors.surfaceContainerLowest, borderRadius: '8px', border: `1px solid ${colors.outlineFaint}`, textAlign: 'left', p: 1, maxHeight: 150, overflowY: 'auto' }}>
-              {asset['asset-location-history'].map((loc, i) => (
-                <ListItem key={i} sx={{ borderBottom: `1px solid rgba(255,255,255,0.03)` }}>
-                  <Typography sx={{ color: colors.primary, fontSize: 12, fontWeight: 'bold', mr: 2 }}>{i + 1}.</Typography>
-                  <span className="material-symbols-outlined" style={{ fontSize: 14, color: colors.onSurfaceVariant, marginRight: 8 }}>history</span>
-                  <ListItemText 
-                    secondary={
-                      <Link component="button" onClick={() => {
-                        const parts = loc.split(',');
-                        if (parts.length === 2) {
-                          setSelectedLoc({ lat: parseFloat(parts[0]), lng: parseFloat(parts[1]) });
-                        }
-                      }} sx={{ color: colors.onSurfaceVariant, fontSize: 12, fontFamily: 'monospace', textDecoration: 'underline', '&:hover': { color: colors.primary, cursor: 'pointer' }}}>
-                        {loc}
-                      </Link>
-                    } 
-                  />
-                </ListItem>
-              ))}
-            </List>
+          {showTripHistory && normalizedHistory.length > 0 && (
+            <Box sx={{ mt: 2, p: 3, bgcolor: colors.surfaceContainerLowest, borderRadius: '8px', border: `1px solid ${colors.outlineFaint}`, textAlign: 'left' }}>
+              <Typography sx={{ fontFamily: fontHeadline, fontSize: 10, color: colors.onSurfaceVariant, textTransform: 'uppercase', mb: 1 }}>Scrubber Timeline</Typography>
+              <Slider
+                value={activeHistoryIndex !== null ? activeHistoryIndex : normalizedHistory.length - 1}
+                min={0}
+                max={Math.max(0, normalizedHistory.length - 1)}
+                step={1}
+                onChange={handleScrub}
+                marks
+                valueLabelDisplay="auto"
+                valueLabelFormat={(value) => {
+                  const item = normalizedHistory[value];
+                  if (!item) return '';
+                  return item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : `Point ${value + 1}`;
+                }}
+                sx={{
+                  color: colors.primary,
+                  '& .MuiSlider-valueLabel': {
+                    backgroundColor: colors.surfaceContainerHigh,
+                    color: colors.onSurface,
+                    fontFamily: fontBody,
+                    fontSize: 12,
+                    padding: '4px 8px',
+                    borderRadius: '4px'
+                  }
+                }}
+              />
+              <Box sx={{ display: 'flex', gap: 1, mt: 1, alignItems: 'center' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 14, color: colors.onSurfaceVariant }}>location_on</span>
+                <Typography sx={{ fontSize: 12, color: colors.onSurface, fontFamily: fontBody }}>{addressDisplay || "Hover/Drag to fetch address"}</Typography>
+              </Box>
+            </Box>
           )}
 
         </Box>
@@ -570,14 +636,14 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
               </Box>
             </Box>
 
-            {gpsLocation && (
+            {(mapCenter && (mapCenter.lat !== 0 || mapCenter.lng !== 0)) && (
               <IconButton
                 onClick={() => {
                   if (handleClose) handleClose();
                   navigate(`/map/${asset.id || asset['asset-id']}`, {
                     state: {
                       asset,
-                      gpsLocation,
+                      gpsLocation: mapCenter,
                       status,
                       battery: displayBattery, 
                       temp: 22
