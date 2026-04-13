@@ -111,6 +111,7 @@ export default function useParticleSwitch(deviceId, initialGps = null) {
           const source = vitals?.device?.power?.source || vitals?.power?.source;
           const network = vitals?.device?.network || vitals?.network;
 
+
           if (battery && battery.charge && battery.charge.err === -210) {
             setBattery("Plugged In");
             setMessage("Power System: Stationary (USB Power)");

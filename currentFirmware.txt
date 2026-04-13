@@ -1,0 +1,72 @@
+#include "Adafruit_GPS.h"
+
+#define RELAY_PIN D7 
+#define EEPROM_ADDR 0 
+
+Adafruit_GPS GPS(&Serial1);
+
+// Variables
+int currentIgnitionStatus; 
+const float MAX_SAFE_SPEED = 5.0;
+const int MIN_SATS = 4;
+
+// --- 1. MOVE FUNCTIONS ABOVE SETUP OR DECLARE THEM ---
+
+int getLocation(String command) {
+    float lat = GPS.latitudeDegrees;
+    float lon = GPS.longitudeDegrees;
+    float speedMPH = GPS.speed * 1.15078;
+    String telemetry = String::format("%f,%f", lat, lon);
+    Particle.publish("gps-telemetry", telemetry, PRIVATE);
+    Particle.publish("gps-speed", String(speedMPH), PRIVATE);
+    return (int)GPS.satellites; 
+}
+
+void applyPhysicalState(int state) {
+    if (state == 1) {
+        digitalWrite(RELAY_PIN, HIGH); // Immobilized
+    } else {
+        digitalWrite(RELAY_PIN, LOW);  // Normal
+    }
+}
+
+int executeStateChange(int targetState) {
+    currentIgnitionStatus = targetState;
+    EEPROM.write(EEPROM_ADDR, targetState);
+    applyPhysicalState(targetState);
+    return targetState;
+}
+
+int handleIgnitionRequest(String command) {
+    if (command == "off") return executeStateChange(0);
+    if (command == "on") {
+        // Safety checks here...
+        return executeStateChange(1);
+    }
+    return -1;
+}
+
+// --- 2. SETUP LIVES AT THE BOTTOM OR MIDDLE ---
+
+void setup() {
+    Serial1.begin(9600);
+    GPS.begin(9600);
+    pinMode(RELAY_PIN, OUTPUT);
+
+    currentIgnitionStatus = EEPROM.read(EEPROM_ADDR);
+    if (currentIgnitionStatus > 1) currentIgnitionStatus = 0; 
+
+    applyPhysicalState(currentIgnitionStatus);
+
+    // Now the compiler knows exactly where these functions are
+    Particle.variable("ignitionStatus", currentIgnitionStatus);
+    Particle.function("getLocation", getLocation);
+    Particle.function("ignitionSwitch", handleIgnitionRequest);
+}
+
+void loop() {
+    char c = GPS.read(); 
+    if (GPS.newNMEAreceived()) {
+        if (!GPS.parse(GPS.lastNMEA())) return;
+    }
+}
