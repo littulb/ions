@@ -102,30 +102,68 @@ export default function useParticleSwitch(deviceId, initialGps = null, onLocatio
     setIsGettingLocation(true);
     setMessage("Locating...");
 
+    let es;
+    let timeout;
+    
+    const cleanup = () => {
+      if (es) es.close();
+      if (timeout) clearTimeout(timeout);
+      setIsGettingLocation(false);
+    };
+
     // Trigger GPS Function
     try {
-      await fetch(`https://api.particle.io/v1/devices/${deviceId}/getLocation`, {
+      const res = await fetch(`https://api.particle.io/v1/devices/${deviceId}/getLocation`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${ACCESS_TOKEN}`, 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({ arg: '' })
       });
+      
+      if (!res.ok) {
+        throw new Error("Failed to trigger GPS function");
+      }
 
       // Listen for event
-      const es = new EventSource(`https://api.particle.io/v1/devices/${deviceId}/events/${EVENT_NAME_GPS_TELEMETRY}?access_token=${ACCESS_TOKEN}`);
+      es = new EventSource(`https://api.particle.io/v1/devices/${deviceId}/events/${EVENT_NAME_GPS_TELEMETRY}?access_token=${ACCESS_TOKEN}`);
+      
+      es.onerror = () => {
+        setMessage("GPS Stream connection error.");
+        cleanup();
+      };
+      
       es.addEventListener(EVENT_NAME_GPS_TELEMETRY, (e) => {
-        const data = JSON.parse(e.data).data.split(',');
-        if (data.length === 2) {
-          const loc = { lat: parseFloat(data[0]), lng: parseFloat(data[1]) };
-          setGpsLocation(loc);
-          if (onLocationUpdate) onLocationUpdate(loc);
-          setMessage("Location Refreshed.");
-          es.close();
-          setIsGettingLocation(false);
+        try {
+          const parsed = JSON.parse(e.data);
+          const rawData = parsed.data || "";
+          
+          const parts = rawData.split(',');
+          if (parts.length === 2) {
+            const lat = parseFloat(parts[0]);
+            const lng = parseFloat(parts[1]);
+            if (!isNaN(lat) && !isNaN(lng)) {
+              const loc = { lat, lng };
+              setGpsLocation(loc);
+              if (onLocationUpdate) onLocationUpdate(loc);
+              setMessage("Location Refreshed.");
+              cleanup();
+            } else {
+              setMessage("Received invalid coordinates.");
+            }
+          } else {
+            setMessage("Searching for satellites...");
+          }
+        } catch(err) {
+           setMessage("Telemetry parse error.");
         }
       });
-      setTimeout(() => { es.close(); setIsGettingLocation(false); }, 30000);
+      
+      timeout = setTimeout(() => { 
+        setMessage("GPS signal timeout. Check antenna location.");
+        cleanup(); 
+      }, 30000);
     } catch (e) {
-      setIsGettingLocation(false);
+      setMessage(`Locating failed: ${e.message}`);
+      cleanup();
     }
   }, [deviceId, isGettingLocation, onLocationUpdate]);
 

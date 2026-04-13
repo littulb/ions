@@ -666,6 +666,62 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
         </Box>
       </Box>
 
+      {/* Active Localization Box mobileLayout */}
+      <Box sx={{ mt: 2, px: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Link
+          component="button"
+          variant="body2"
+          onClick={() => setShowTripHistory(!showTripHistory)}
+          sx={{
+            color: colors.onSurfaceVariant,
+            fontFamily: fontBody,
+            fontSize: 12,
+            textDecoration: 'none',
+            transition: 'color 0.2s',
+            '&:hover': { color: colors.primary }
+          }}
+        >
+          {showTripHistory ? "HIDE HISTORY TIMELINE" : "SHOW HISTORY TIMELINE"}
+        </Link>
+      </Box>
+      {/* Add this timeline logic */}
+      {showTripHistory && normalizedHistory.length > 0 && (
+        <Box sx={{ mt: 2, p: 2, bgcolor: colors.surfaceContainerLowest, borderRadius: '12px', border: `1px solid ${colors.outlineVariant}`, textAlign: 'left' }}>
+          <Typography sx={{ fontFamily: fontHeadline, fontSize: 10, color: colors.onSurfaceVariant, textTransform: 'uppercase', mb: 1, letterSpacing: '0.1em' }}>
+            Scrubber Timeline
+          </Typography>
+          <Slider
+            value={activeHistoryIndex !== null ? activeHistoryIndex : normalizedHistory.length - 1}
+            min={0}
+            max={Math.max(0, normalizedHistory.length - 1)}
+            step={1}
+            onChange={handleScrub}
+            marks
+            valueLabelDisplay="auto"
+            valueLabelFormat={(value) => {
+              const item = normalizedHistory[value];
+              if (!item) return '';
+              return item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : `Point ${value + 1}`;
+            }}
+            sx={{
+              color: colors.primary,
+              '& .MuiSlider-valueLabel': {
+                backgroundColor: colors.surfaceContainerHigh,
+                color: colors.onSurface,
+                fontFamily: fontBody,
+                fontSize: 12,
+              }
+            }}
+          />
+          <Box sx={{ display: 'flex', gap: 1, mt: 1, alignItems: 'center' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 14, color: colors.onSurfaceVariant }}>location_on</span>
+            <Typography sx={{ fontSize: 11, color: colors.onSurface, fontFamily: fontBody }}>
+              {addressDisplay || "Drag slider to fetch address"}
+            </Typography>
+          </Box>
+        </Box>
+      )}
+
       {/* Action Buttons Block */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 2 }}>
         <Button
