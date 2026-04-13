@@ -6,6 +6,7 @@
 Adafruit_GPS GPS(&Serial1);
 
 // Variables
+FuelGauge fuel; // Initialize the FuelGauge object
 int currentIgnitionStatus; 
 const float MAX_SAFE_SPEED = 5.0;
 const int MIN_SATS = 4;
@@ -16,6 +17,15 @@ int getLocation(String command) {
     float lat = GPS.latitudeDegrees;
     float lon = GPS.longitudeDegrees;
     float speedMPH = GPS.speed * 1.15078;
+    // This snippet can be placed inside getLocation or its own function
+    float batterySoc = fuel.getSoC();      // State of Charge (0-100%)
+    float batteryVolts = fuel.getVCell(); // Voltage (e.g., 3.7 - 4.2)
+    
+    // Format into a readable string: "85.5%,3.92V"
+    String batteryData = String::format("%.1f%%,%.2fV", batterySoc, batteryVolts);
+    
+    // Publish with the name "batteryStatus"
+    Particle.publish("batteryStatus", batteryData, PRIVATE);
     String telemetry = String::format("%f,%f", lat, lon);
     Particle.publish("gps-telemetry", telemetry, PRIVATE);
     Particle.publish("gps-speed", String(speedMPH), PRIVATE);
