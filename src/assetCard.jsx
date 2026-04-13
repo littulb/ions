@@ -22,6 +22,8 @@ import { styled, useTheme } from "@mui/material/styles";
 import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 
 import useParticleSwitch from './useParticleSwitch';
+import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { db } from './firebase';
 
 // --- CONFIGURATION ---
 const ACCESS_TOKEN = "b41c40940d370527fc69d053c6138afbed9094c2";
@@ -39,6 +41,22 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
   const theme = useTheme();
   // Ensure we have an ID for the hook
   const deviceId = asset["asset-id"] || asset.assetId || asset.id;
+
+  const handleLocationUpdate = useCallback(async (newLoc) => {
+    if (!asset || !(asset.id || asset['asset-id'])) return;
+    const docId = asset.id || asset['asset-id'];
+    try {
+      const locString = `${newLoc.lat}, ${newLoc.lng}`;
+      const assetRef = doc(db, 'assets', docId);
+      await updateDoc(assetRef, {
+        'asset-location-history': arrayUnion(locString)
+      });
+      console.log('Location saved to Firestore:', locString);
+    } catch (e) {
+      console.error('Error saving location history:', e);
+    }
+  }, [asset]);
+
   const {
     status,
     isLoading,
@@ -51,9 +69,10 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
     handleGetLocation,
     battery,
     signal
-  } = useParticleSwitch(deviceId, restoredGps);
+  } = useParticleSwitch(deviceId, restoredGps, handleLocationUpdate);
   const [showTripHistory, setShowTripHistory] = useState(false);
   const [hasRequestedGps, setHasRequestedGps] = useState(false);
+  const [selectedLoc, setSelectedLoc] = useState(null);
 
   useEffect(() => {
     if (isReady && !gpsLocation && !hasRequestedGps) {
@@ -76,8 +95,10 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
   const displaySignal = signal !== null ? signal : '--';
 
   const mapCenter = useMemo(() => {
+    if (selectedLoc) return selectedLoc;
     if (gpsLocation && gpsLocation.lat) return { lat: gpsLocation.lat, lng: gpsLocation.lng };
-    const lastLoc = asset.assetLocation && asset.assetLocation.length > 0 ? asset.assetLocation[asset.assetLocation.length - 1] : null;
+    const history = asset['asset-location-history'];
+    const lastLoc = history && history.length > 0 ? history[history.length - 1] : null;
     if (lastLoc && typeof lastLoc === 'string') {
       const parts = lastLoc.split(',');
       if (parts.length === 2) {
@@ -87,7 +108,7 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
       }
     }
     return { lat: 0, lng: -0 };
-  }, [gpsLocation, asset.assetLocation]);
+  }, [selectedLoc, gpsLocation, asset['asset-location-history']]);
 
   const formatDate = (timestamp) => {
     if (!timestamp || !timestamp.toDate) return "N/A";
@@ -398,12 +419,24 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
               {showTripHistory ? "HIDE LOCATION HISTORY" : "SHOW LOCATION HISTORY"}
             </Link>
           </Box>
-          {showTripHistory && asset.assetLocation && (
+          {showTripHistory && asset['asset-location-history'] && (
             <List dense sx={{ mt: 2, bgcolor: colors.surfaceContainerLowest, borderRadius: '8px', border: `1px solid ${colors.outlineFaint}`, textAlign: 'left', p: 1, maxHeight: 150, overflowY: 'auto' }}>
-              {asset.assetLocation.map((loc, i) => (
+              {asset['asset-location-history'].map((loc, i) => (
                 <ListItem key={i} sx={{ borderBottom: `1px solid rgba(255,255,255,0.03)` }}>
+                  <Typography sx={{ color: colors.primary, fontSize: 12, fontWeight: 'bold', mr: 2 }}>{i + 1}.</Typography>
                   <span className="material-symbols-outlined" style={{ fontSize: 14, color: colors.onSurfaceVariant, marginRight: 8 }}>history</span>
-                  <ListItemText secondary={loc} secondaryTypographyProps={{ color: colors.onSurfaceVariant, fontSize: 12, fontFamily: 'monospace' }} />
+                  <ListItemText 
+                    secondary={
+                      <Link component="button" onClick={() => {
+                        const parts = loc.split(',');
+                        if (parts.length === 2) {
+                          setSelectedLoc({ lat: parseFloat(parts[0]), lng: parseFloat(parts[1]) });
+                        }
+                      }} sx={{ color: colors.onSurfaceVariant, fontSize: 12, fontFamily: 'monospace', textDecoration: 'underline', '&:hover': { color: colors.primary, cursor: 'pointer' }}}>
+                        {loc}
+                      </Link>
+                    } 
+                  />
                 </ListItem>
               ))}
             </List>

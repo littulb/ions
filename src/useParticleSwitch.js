@@ -10,7 +10,7 @@ const EVENT_NAME_WATCHDOG_STATUS = "WATCHDOG_STATS";
 const MAX_RETRIES = 3;
 const DELAY_MS = 1000;
 
-export default function useParticleSwitch(deviceId, initialGps = null) {
+export default function useParticleSwitch(deviceId, initialGps = null, onLocationUpdate = null) {
   const [isReady, setIsReady] = useState(false);
   const [status, setStatus] = useState("off");
   const [isLoading, setIsLoading] = useState(false);
@@ -240,6 +240,9 @@ export default function useParticleSwitch(deviceId, initialGps = null) {
               lng: lon,
               fix: true
             });
+            if (onLocationUpdate) {
+              onLocationUpdate({ lat, lng: lon });
+            }
             setMessage(`Location synced: ${lat}, ${lon}`);
             cleanup();
           } else {
