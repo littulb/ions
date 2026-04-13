@@ -487,7 +487,7 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
                 valueLabelFormat={(value) => {
                   const item = normalizedHistory[value];
                   if (!item) return '';
-                  return item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : `Point ${value + 1}`;
+                  return item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : `Point ${value + 1}`;
                 }}
                 sx={{
                   color: colors.primary,
@@ -645,7 +645,7 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
                       asset,
                       gpsLocation: mapCenter,
                       status,
-                      battery: displayBattery, 
+                      battery: displayBattery,
                       temp: 22
                     }
                   });
@@ -691,10 +691,10 @@ const AssetCard = ({ asset, handleClose, restoredGps }) => {
           }}
         >
           {(!isReady || isLoading) ? (
-             <>
-               <CircularProgress size={18} color="inherit" />
-               <span style={{ fontSize: 13, letterSpacing: '0.1em' }}>SYNCING...</span>
-             </>
+            <>
+              <CircularProgress size={18} color="inherit" />
+              <span style={{ fontSize: 13, letterSpacing: '0.1em' }}>SYNCING...</span>
+            </>
           ) : (
             <>
               <span className="material-symbols-outlined" style={{ fontSize: 18, fontVariationSettings: "'FILL' 1" }}>power_settings_new</span>
