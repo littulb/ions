@@ -113,17 +113,7 @@ export default function useParticleSwitch(deviceId, initialGps = null, onLocatio
 
     // Trigger GPS Function
     try {
-      const res = await fetch(`https://api.particle.io/v1/devices/${deviceId}/getLocation`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${ACCESS_TOKEN}`, 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({ arg: '' })
-      });
-      
-      if (!res.ok) {
-        throw new Error("Failed to trigger GPS function");
-      }
-
-      // Listen for event
+      // 1. Listen for event FIRST to avoid missing the broadcast
       es = new EventSource(`https://api.particle.io/v1/devices/${deviceId}/events/${EVENT_NAME_GPS_TELEMETRY}?access_token=${ACCESS_TOKEN}`);
       
       es.onerror = () => {
@@ -143,7 +133,10 @@ export default function useParticleSwitch(deviceId, initialGps = null, onLocatio
             if (!isNaN(lat) && !isNaN(lng)) {
               const loc = { lat, lng };
               setGpsLocation(loc);
-              if (onLocationUpdate) onLocationUpdate(loc);
+              if (onLocationUpdate) {
+                // Safely catch to prevent Unhandled Promise Rejections (e.g., Firebase IndexedDB limits)
+                Promise.resolve(onLocationUpdate(loc)).catch(err => console.warn('Ignored telemetry log error:', err));
+              }
               setMessage("Location Refreshed.");
               cleanup();
             } else {
@@ -157,6 +150,17 @@ export default function useParticleSwitch(deviceId, initialGps = null, onLocatio
         }
       });
       
+      // 2. Trigger the fetch to cause the event to be published
+      const res = await fetch(`https://api.particle.io/v1/devices/${deviceId}/getLocation`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${ACCESS_TOKEN}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ arg: '' })
+      });
+      
+      if (!res.ok) {
+        throw new Error("Failed to trigger GPS function");
+      }
+
       timeout = setTimeout(() => { 
         setMessage("GPS signal timeout. Check antenna location.");
         cleanup(); 
