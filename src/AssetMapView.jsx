@@ -69,6 +69,7 @@ export default function AssetMapView() {
     handleGetLocation,
     isGettingLocation
   } = useParticleSwitch(deviceId, initialGpsLocation);
+  const [showTripHistory, setShowTripHistory] = useState(false);
 
   const gpsLocation = hookGpsLocation || initialGpsLocation;
   const battery = hookBattery !== null ? hookBattery : initialBattery;
@@ -185,8 +186,8 @@ export default function AssetMapView() {
                 </>
               )}
             </Button>
-            <Button 
-              onClick={handleGetLocation} 
+            <Button
+              onClick={handleGetLocation}
               disabled={!isReady || isGettingLocation}
               sx={{ width: 54, height: 54, minWidth: 54, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: colors.surfaceContainerHighest, borderRadius: '8px', border: `1px solid ${colors.outlineVariant}50`, color: colors.primary, '&:hover': { bgcolor: colors.surfaceBright } }}
             >
@@ -196,6 +197,45 @@ export default function AssetMapView() {
               <span className="material-symbols-outlined" style={{ fontSize: 24 }}>navigation</span>
             </Button>
           </Box>
+          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Link component="button" variant="body2" onClick={() => setShowTripHistory(!showTripHistory)} sx={{ color: colors.onSurfaceVariant, fontFamily: fontBody, fontSize: 12, transition: 'color 0.2s', '&:hover': { color: colors.primary } }}>
+              {showTripHistory ? "HIDE HISTORY TIMELINE" : "SHOW HISTORY TIMELINE"}
+            </Link>
+          </Box>
+          {showTripHistory && normalizedHistory.length > 0 && (
+            <Box sx={{ mt: 2, p: 3, bgcolor: colors.surfaceContainerLowest, borderRadius: '8px', border: `1px solid ${colors.outlineFaint}`, textAlign: 'left' }}>
+              <Typography sx={{ fontFamily: fontHeadline, fontSize: 10, color: colors.onSurfaceVariant, textTransform: 'uppercase', mb: 1 }}>Scrubber Timeline</Typography>
+              <Slider
+                value={activeHistoryIndex !== null ? activeHistoryIndex : normalizedHistory.length - 1}
+                min={0}
+                max={Math.max(0, normalizedHistory.length - 1)}
+                step={1}
+                onChange={handleScrub}
+                marks
+                valueLabelDisplay="auto"
+                valueLabelFormat={(value) => {
+                  const item = normalizedHistory[value];
+                  if (!item) return '';
+                  return item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : `Point ${value + 1}`;
+                }}
+                sx={{
+                  color: colors.primary,
+                  '& .MuiSlider-valueLabel': {
+                    backgroundColor: colors.surfaceContainerHigh,
+                    color: colors.onSurface,
+                    fontFamily: fontBody,
+                    fontSize: 12,
+                    padding: '4px 8px',
+                    borderRadius: '4px'
+                  }
+                }}
+              />
+              <Box sx={{ display: 'flex', gap: 1, mt: 1, alignItems: 'center' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 14, color: colors.onSurfaceVariant }}>location_on</span>
+                <Typography sx={{ fontSize: 12, color: colors.onSurface, fontFamily: fontBody }}>{addressDisplay || "Hover/Drag to fetch address"}</Typography>
+              </Box>
+            </Box>
+          )}
 
         </Box>
       </Box>
